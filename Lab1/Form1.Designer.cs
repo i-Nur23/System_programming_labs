@@ -453,7 +453,7 @@ partial class Form1
         Controls.Add(panel3);
         Controls.Add(panel2);
         Controls.Add(panel1);
-        Location = new Point(10, 10);
+        Location = new Point(10, 5);
         Name = "Form1";
         Text = "Двухпросмотровый ассемблер в абсолютном формате";
         panel1.ResumeLayout(false);

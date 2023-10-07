@@ -10,16 +10,17 @@ public partial class Form1 : Form
     public Form1()
     {
         InitializeComponent();
-        FillExample();
-        operationCodesTable = new OperationCodes(dg_operCodes);
 
+        operationCodesTable = new OperationCodes(dg_operCodes);
+        auxiliaryTable = new AuxiliaryTable(dg_aux);
+        symbolicNames = new SymbolicNames(dg_symbolNames);
+
+        FillExample();
     }
 
     private OperationCodes operationCodesTable;
-
-    private int loadAddress = 0;
-    private List<string> directives = new List<string> { "START", "END", "BYTE", "WORD", "RESB", "RESW" };
-    private List<Operation> operations = new List<Operation>();
+    private AuxiliaryTable auxiliaryTable;
+    private SymbolicNames symbolicNames;
 
     // Заполнение примера из лекции
     private void FillExample()
@@ -48,13 +49,10 @@ public partial class Form1 : Form
             new Operation { MnemonicCode = "LOADR1", BinaryCode = 2, CommandLength = 4 },
             new Operation { MnemonicCode = "LOADR2", BinaryCode = 3, CommandLength = 4 },
             new Operation { MnemonicCode = "ADD", BinaryCode = 4, CommandLength = 2 },
-            new Operation { MnemonicCode = "SAVER1", BinaryCode = 5, CommandLength = 4 },
+            new Operation { MnemonicCode = "SAVER1", BinaryCode = 19, CommandLength = 4 },
         };
 
-        operations.ForEach(op =>
-        {
-            dg_operCodes.Rows.Add(op.MnemonicCode, op.BinaryCode, op.CommandLength);
-        });
+        operationCodesTable?.AddRange(operations);
 
     }
 
@@ -73,10 +71,12 @@ public partial class Form1 : Form
 
         try
         {
-            operations.Clear();
             TB_firstPassError.Text = "";
+            auxiliaryTable.Clear();
+            symbolicNames.Clear();
 
-            FirstPass.Run(initCode, operationCodesTable.GetOperations());
+            var fp = new FirstPass(initCode, operationCodesTable.GetOperations(), auxiliaryTable, symbolicNames);
+            fp.Run();
 
             btn_firstPass.Enabled = false;
             btn_secondPass.Enabled = true;

@@ -1,6 +1,7 @@
 ﻿using Lab1.Models;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,16 +43,31 @@ namespace Lab1.Tables
 
                 mnemonicCode = mnemonicCodeCell.ToString().ToUpper();
 
+                if (Checks.isDirective(mnemonicCode) || Checks.isRegister(mnemonicCode))
+                {
+                    throw new Exception($"ТКО, строка {i + 1}: мнемоника не может быть зарезервированным именем");
+                }
+
                 if (binaryCodeCell == null)
                 {
                     throw new Exception($"ТКО, строка {i + 1}: двоичный код не может быть пустым полем");
                 }
-
-                var isBinaryCodeOk = Int32.TryParse(binaryCodeCell.ToString(), out binaryCode);
+                
+                var isBinaryCodeOk = Int32.TryParse(
+                    binaryCodeCell.ToString(),
+                    NumberStyles.HexNumber,
+                    CultureInfo.CurrentCulture, 
+                    out binaryCode
+                );
 
                 if (!isBinaryCodeOk)
                 {
                     throw new Exception($"ТКО, строка {i + 1}: двоичный код должен быть числом");
+                }
+
+                if (binaryCode < 1 || binaryCode > 63)
+                {
+                    throw new Exception($"ТКО, строка {i + 1}: двоичный код должен быть числом больше 0, но меньше 3F");
                 }
 
                 if (lengthCell == null)
@@ -91,6 +107,18 @@ namespace Lab1.Tables
             }
 
             return operations;
+        }
+
+        public void AddRange(IEnumerable<Operation> addingOperations)
+        {
+            foreach (var op in addingOperations)
+            {
+                table.Rows.Add(
+                    op.MnemonicCode,
+                    op.BinaryCode.ToString("X"), 
+                    op.CommandLength
+                );
+            }
         }
 
 
