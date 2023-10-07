@@ -14,6 +14,8 @@ public static class Checks
     private static List<string> registers = new List<string> { "R0", "R1", "R2", "R3", "R4", "R5", "R6","R7","R8","R9",
         "R10","R11","R12", "R13","R14","R15" };
     
+    private static List<char> hexSymbols = new List<char> { '0', '1', '2', '3', '4', '5', '6', '7','8','9','A','B','C','D','E','F' };
+    
     public static Func<string, bool> isDirective = command => directives.IndexOf(command.ToUpper()) != -1;
     
     public static Func<string, bool> isRegister = command => registers.IndexOf(command.ToUpper()) != -1;
@@ -55,5 +57,17 @@ public static class Checks
        
     }
 
+    public static bool IsContainsOnlyHexSymbols(string str)
+    {
+        
+        foreach (var symbol in str.ToUpper())
+        {
+            if (hexSymbols.IndexOf(symbol) == -1) return false;
+        }
+
+        return true;
+    }
+
+        
     
 }

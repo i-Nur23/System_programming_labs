@@ -16,23 +16,26 @@ public class FirstPass
     private readonly List<string> code;
     private readonly List<Operation> operations;
     private readonly AuxiliaryTable auxiliaryTable;
-    private readonly SymbolicNames symbolicNames;
+    private readonly SymbolicNames symbolicNamesTable;
 
     private bool isStarted = false;
     private bool isEnded = false;
+
+    private List<AuxiliaryOperation> auxiliaryOperations = new List<AuxiliaryOperation>();
+    private List<SymbolicName> symbolicNames = new List<SymbolicName>();
 
     public FirstPass(
         List<string> code, 
         List<Operation> operations, 
         AuxiliaryTable auxiliaryTable, 
-        SymbolicNames symbolicNames
+        SymbolicNames symbolicNamesTable
         )
 
     {
         this.code = code;
         this.operations = operations;
         this.auxiliaryTable = auxiliaryTable;   
-        this.symbolicNames = symbolicNames;
+        this.symbolicNamesTable = symbolicNamesTable;
     }
 
 
@@ -64,9 +67,17 @@ public class FirstPass
                     break;
                 case Line.COMMAND:
                     break;
-                default:
-                    break;
             }
+        }
+
+        foreach (var op in auxiliaryOperations)
+        {
+            auxiliaryTable.Add(op);
+        }
+
+        foreach (var name in symbolicNames)
+        {
+            symbolicNamesTable.Add(name);
         }
     }
 
@@ -112,12 +123,13 @@ public class FirstPass
 
                 countAddress = loadAddress;
 
-                auxiliaryTable.Add(new AuxiliaryOperation
+                auxiliaryOperations.Add(new AuxiliaryOperation
                 {
                     Address = line[0],
                     BinaryCode = line[1],
                     FirstOperand = line[2],
                 });
+                
                 break;
             case "END":
                 if (line.Length > 2)
@@ -133,7 +145,7 @@ public class FirstPass
                 if (line.Length == 1)
                 {
                     endAddress = loadAddress;
-                    auxiliaryTable.Add(new AuxiliaryOperation { Address = ToSixDigits(countAddress.ToString("X")), BinaryCode = "END" });
+                    auxiliaryOperations.Add(new AuxiliaryOperation { Address = ToSixDigits(countAddress.ToString("X")), BinaryCode = "END" });
                     break;
                 }
 
@@ -154,10 +166,68 @@ public class FirstPass
                     throw new Exception("Неверный адрес входа в программу");
                 }
 
-                auxiliaryTable.Add(new AuxiliaryOperation { Address = ToSixDigits(countAddress.ToString("X")), BinaryCode = "END", FirstOperand = line[1] });
+                auxiliaryOperations.Add(new AuxiliaryOperation { 
+                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    BinaryCode = "END", 
+                    FirstOperand = line[1] 
+                });
 
                 break;
             case "BYTE":
+                if (line.Length != 3 || line[0].ToUpper() == "BYTE")
+                {
+                    throw new Exception($"Строка {index}: неверный формат директивы BYTE");
+                }
+
+                int addingToAddress = 1;
+
+                var isOperandOk = Int32.TryParse(line[2], out int byteOperand);
+
+                if (!isOperandOk)
+                {
+                    if (line[2][1] != (char)39 || line[2][line[2].Length - 1] != (char)39)
+                    {
+                        throw new Exception($"Строка { index + 1 }: неверный операнд");    
+                    }
+                    
+                    
+                    
+                    if (line[2][0] == 'x' || line[2][0] == 'X')
+                    {
+                        if (!Checks.IsContainsOnlyHexSymbols(line[2].Substring(2, line[2].Length - 3)))
+                        {
+                            throw new Exception($"Строка { index + 1 }: неверный операнд");
+                        }
+
+                        addingToAddress = (int) Math.Ceiling( (double)line[2].Substring(2, line[2].Length - 3).Length / 2);
+                    }
+                    
+                    else if (line[2][0] == 'c' || line[2][0] == 'C')
+                    {
+                        addingToAddress = line[2].Substring(2, line[2].Length - 3).Length;
+                    }
+
+                    else
+                    {
+                        throw new Exception($"Строка { index + 1 }: неверный операнд");
+                    }
+                }
+
+                if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
+                {
+                    throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
+                }
+                
+                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0]});
+                
+                auxiliaryOperations.Add(new AuxiliaryOperation { 
+                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    BinaryCode = "BYTE", 
+                    FirstOperand = line[2]
+                });
+
+                countAddress += addingToAddress;
+
                 break;
             case "WORD":
                 break;

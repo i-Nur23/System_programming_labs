@@ -41,10 +41,6 @@ partial class Form1
         label5 = new Label();
         label4 = new Label();
         dg_symbolNames = new DataGridView();
-        dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
-        dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
-        dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
-        dataGridViewTextBoxColumn7 = new DataGridViewTextBoxColumn();
         TB_firstPassError = new RichTextBox();
         label3 = new Label();
         dg_aux = new DataGridView();
@@ -65,6 +61,8 @@ partial class Form1
         dataGridViewTextBoxColumn11 = new DataGridViewTextBoxColumn();
         btn_firstPass = new Button();
         btn_secondPass = new Button();
+        dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
+        dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
         panel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).BeginInit();
         panel2.SuspendLayout();
@@ -193,8 +191,7 @@ partial class Form1
         dg_symbolNames.AllowUserToResizeRows = false;
         dg_symbolNames.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
         dg_symbolNames.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dg_symbolNames.ColumnHeadersVisible = false;
-        dg_symbolNames.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn5, dataGridViewTextBoxColumn6, dataGridViewTextBoxColumn7 });
+        dg_symbolNames.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn5 });
         dg_symbolNames.Enabled = false;
         dg_symbolNames.Location = new Point(5, 405);
         dg_symbolNames.Name = "dg_symbolNames";
@@ -204,38 +201,6 @@ partial class Form1
         dg_symbolNames.RowTemplate.Height = 29;
         dg_symbolNames.Size = new Size(455, 216);
         dg_symbolNames.TabIndex = 6;
-        // 
-        // dataGridViewTextBoxColumn4
-        // 
-        dataGridViewTextBoxColumn4.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn4.HeaderText = "Column1";
-        dataGridViewTextBoxColumn4.MinimumWidth = 6;
-        dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
-        dataGridViewTextBoxColumn4.ReadOnly = true;
-        // 
-        // dataGridViewTextBoxColumn5
-        // 
-        dataGridViewTextBoxColumn5.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn5.HeaderText = "Column2";
-        dataGridViewTextBoxColumn5.MinimumWidth = 6;
-        dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
-        dataGridViewTextBoxColumn5.ReadOnly = true;
-        // 
-        // dataGridViewTextBoxColumn6
-        // 
-        dataGridViewTextBoxColumn6.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn6.HeaderText = "Column3";
-        dataGridViewTextBoxColumn6.MinimumWidth = 6;
-        dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
-        dataGridViewTextBoxColumn6.ReadOnly = true;
-        // 
-        // dataGridViewTextBoxColumn7
-        // 
-        dataGridViewTextBoxColumn7.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn7.HeaderText = "Column4";
-        dataGridViewTextBoxColumn7.MinimumWidth = 6;
-        dataGridViewTextBoxColumn7.Name = "dataGridViewTextBoxColumn7";
-        dataGridViewTextBoxColumn7.ReadOnly = true;
         // 
         // TB_firstPassError
         // 
@@ -442,6 +407,22 @@ partial class Form1
         btn_secondPass.UseVisualStyleBackColor = true;
         btn_secondPass.Click += btn_secondPass_Click;
         // 
+        // dataGridViewTextBoxColumn4
+        // 
+        dataGridViewTextBoxColumn4.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn4.HeaderText = "СИ";
+        dataGridViewTextBoxColumn4.MinimumWidth = 6;
+        dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+        dataGridViewTextBoxColumn4.ReadOnly = true;
+        // 
+        // dataGridViewTextBoxColumn5
+        // 
+        dataGridViewTextBoxColumn5.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn5.HeaderText = "Адрес СИ";
+        dataGridViewTextBoxColumn5.MinimumWidth = 6;
+        dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+        dataGridViewTextBoxColumn5.ReadOnly = true;
+        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
@@ -483,10 +464,6 @@ partial class Form1
     private Label label5;
     private Label label4;
     private DataGridView dg_symbolNames;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
     private RichTextBox TB_firstPassError;
     private Label label3;
     private DataGridView dg_aux;
@@ -507,4 +484,6 @@ partial class Form1
     private DataGridViewTextBoxColumn Column1;
     private DataGridViewTextBoxColumn Column2;
     private DataGridViewTextBoxColumn Column3;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
 }
