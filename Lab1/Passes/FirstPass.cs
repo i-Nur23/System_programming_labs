@@ -70,6 +70,11 @@ public class FirstPass
             }
         }
 
+        if (countAddress > MAX_MEMORY_VOLUME)
+        {
+            throw new Exception("Ошибка. Произошло переполнение памяти");
+        } 
+
         foreach (var op in auxiliaryOperations)
         {
             auxiliaryTable.Add(op);
@@ -174,9 +179,9 @@ public class FirstPass
 
                 break;
             case "BYTE":
-                if (line.Length != 3 || line[0].ToUpper() == "BYTE")
+                if (line.Length != 3 || line[0].ToUpper() == "BYTE" || line[2].ToUpper() == "BYTE")
                 {
-                    throw new Exception($"Строка {index}: неверный формат директивы BYTE");
+                    throw new Exception($"Строка { index + 1}: неверный формат директивы BYTE");
                 }
 
                 int addingToAddress = 1;
@@ -230,10 +235,90 @@ public class FirstPass
 
                 break;
             case "WORD":
+                if (line.Length != 3 || line[0].ToUpper() == "WORD" || line[2].ToUpper() == "WORD")
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат директивы WORD");
+                }
+
+                var isWordOperandOk = Int32.TryParse(line[2], out int wordOperand);
+
+                if (!isWordOperandOk)
+                {
+                    throw new Exception($"Строка { index + 1 }: операнд должен быть числом");
+                }
+                
+                if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
+                {
+                    throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
+                }
+                
+                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
+                
+                auxiliaryOperations.Add(new AuxiliaryOperation { 
+                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    BinaryCode = "WORD", 
+                    FirstOperand = line[2]
+                });
+
+                countAddress += 3;
+
                 break;
             case "RESB":
+                if (line.Length != 3 || line[0].ToUpper() == "RESB" || line[2].ToUpper() == "RESB")
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат директивы RESB");
+                }
+
+                var isResbOperandOk = Int32.TryParse(line[2], out int resbOperand);
+
+                if (!isResbOperandOk)
+                {
+                    throw new Exception($"Строка { index + 1 }: операнд должен быть числом");
+                }
+                
+                if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
+                {
+                    throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
+                }
+                
+                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
+                
+                auxiliaryOperations.Add(new AuxiliaryOperation { 
+                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    BinaryCode = "RESB", 
+                    FirstOperand = line[2]
+                });
+
+                countAddress += resbOperand;
+
                 break;
             case "RESW":
+                if (line.Length != 3 || line[0].ToUpper() == "RESW" || line[2].ToUpper() == "RESW")
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат директивы RESW");
+                }
+
+                var isReswOperandOk = Int32.TryParse(line[2], out int reswOperand);
+
+                if (!isReswOperandOk)
+                {
+                    throw new Exception($"Строка { index + 1 }: операнд должен быть числом");
+                }
+                
+                if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
+                {
+                    throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
+                }
+                
+                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
+                
+                auxiliaryOperations.Add(new AuxiliaryOperation { 
+                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    BinaryCode = "RESW", 
+                    FirstOperand = line[2]
+                });
+
+                countAddress += reswOperand * 3;
                 break;
             default:
                 break;
