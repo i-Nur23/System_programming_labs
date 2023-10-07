@@ -68,6 +68,11 @@ public static class Checks
         return true;
     }
 
+    public static bool IsDirectAddressing(string operand)
+    {
+        return registers.IndexOf(operand.ToUpper()) != -1 || Int32.TryParse(operand, out _);
+    }
+
         
     
 }

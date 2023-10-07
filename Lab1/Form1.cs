@@ -49,7 +49,7 @@ public partial class Form1 : Form
             new Operation { MnemonicCode = "LOADR1", BinaryCode = 2, CommandLength = 4 },
             new Operation { MnemonicCode = "LOADR2", BinaryCode = 3, CommandLength = 4 },
             new Operation { MnemonicCode = "ADD", BinaryCode = 4, CommandLength = 2 },
-            new Operation { MnemonicCode = "SAVER1", BinaryCode = 19, CommandLength = 4 },
+            new Operation { MnemonicCode = "SAVER1", BinaryCode = 5, CommandLength = 4 },
         };
 
         operationCodesTable?.AddRange(operations);

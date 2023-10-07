@@ -39,6 +39,12 @@ public class FirstPass
     }
 
 
+    public string ToTwoDigits(string initStr)
+    {
+        var strWithZeros = "00" + initStr;
+        return strWithZeros.Substring(strWithZeros.Length - 2);
+    }
+    
     public string ToSixDigits(string initStr)
     {
         var strWithZeros = "000000" + initStr;
@@ -52,10 +58,14 @@ public class FirstPass
 
         for (int i = 0; i < linesCount; i++)
         {
-            splittedLine = code[i].Trim().Split(" ");
+            splittedLine = code[i]
+                .Trim()
+                .Split(" ")
+                .Where(el => el.Length > 0)
+                .ToArray();
             if (splittedLine.Length > 4)
             {
-                throw new Exception($"Строка {i + 1}: неыерный формат строки - больше 4-х элементов");
+                throw new Exception($"Строка {i + 1}: неверный формат строки - больше 4-х элементов");
             }
 
             Line line = Checks.getTypeOfLine(splittedLine, i, operations, out string name);
@@ -66,6 +76,7 @@ public class FirstPass
                     HandleDirective(splittedLine, i, name);
                     break;
                 case Line.COMMAND:
+                    HandleCommand(splittedLine, i, name);
                     break;
             }
         }
@@ -86,6 +97,73 @@ public class FirstPass
         }
     }
 
+    // Обработка команд
+    private void HandleCommand(string[] line, int index, string commandName)
+    {
+        var operation = operations.FirstOrDefault(op => op.MnemonicCode == commandName.ToUpper());
+        var lineElementsCount = line.Length;
+        
+        if (operation == null)
+        {
+            throw new Exception($"Строка {index + 1}: строка должна содержать или команду, или директиву");
+        }
+        
+        int binaryCode;
+
+        if (line[0] != commandName)
+        {
+            if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
+            {
+                throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
+            }
+            
+            symbolicNames.Add(new SymbolicName() { Name = line[0].ToUpper(), Address = ToSixDigits(countAddress.ToString("X"))});
+            
+            binaryCode = operation.BinaryCode * 4 + (Checks.IsDirectAddressing(line[2]) ? 0 : 1);
+        }
+        else
+        {
+            binaryCode = operation.BinaryCode * 4 + (Checks.IsDirectAddressing(line[1]) ? 0 : 1);
+        }
+
+        var auxOperation = new AuxiliaryOperation
+        {
+            Address = ToSixDigits(countAddress.ToString("X")),
+            BinaryCode = ToTwoDigits(binaryCode.ToString("X"))
+        };
+
+        if (line[0] != commandName)
+        {
+            if (lineElementsCount > 2)
+            {
+                auxOperation.FirstOperand = line[2];
+            }
+
+            if (lineElementsCount == 4)
+            {
+                auxOperation.SecondOperand = line[3];
+            }
+        }
+        else
+        {
+            if (lineElementsCount > 1)
+            {
+                auxOperation.FirstOperand = line[1];
+            }
+
+            if (lineElementsCount == 3)
+            {
+                auxOperation.SecondOperand = line[2];
+            }
+        }
+        
+        auxiliaryOperations.Add(auxOperation);
+
+        countAddress += operation.CommandLength;
+
+    }
+    
+    // Обработка директив
     private void HandleDirective(string[] line, int index, string dirName) 
     {
         switch (dirName)
