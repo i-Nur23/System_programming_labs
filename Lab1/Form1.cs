@@ -13,20 +13,24 @@ public partial class Form1 : Form
 
         operationCodesTable = new OperationCodes(dg_operCodes);
         auxiliaryTable = new AuxiliaryTable(dg_aux);
-        symbolicNames = new SymbolicNames(dg_symbolNames);
+        symbolicNamesTable = new SymbolicNames(dg_symbolNames);
+        binaryCodeTextBox = new BinaryCodeTextBox(TB_binaryCode);
 
         FillExample();
     }
 
     private OperationCodes operationCodesTable;
     private AuxiliaryTable auxiliaryTable;
-    private SymbolicNames symbolicNames;
+    private SymbolicNames symbolicNamesTable;
+    private BinaryCodeTextBox binaryCodeTextBox;
+
+    private FirstPassResult firstPassResult;
 
     // Заполнение примера из лекции
     private void FillExample()
     {
         var code = new string[] {
-            "Program START 100",
+            "Prog1 START 100",
             "   JMP L1",
             "A1 RESB 10",
             "A2 RESW 20",
@@ -71,12 +75,18 @@ public partial class Form1 : Form
 
         try
         {
-            TB_firstPassError.Text = "";
+            TB_firstPassError.Clear();
             auxiliaryTable.Clear();
-            symbolicNames.Clear();
+            symbolicNamesTable.Clear();
 
-            var fp = new FirstPass(initCode, operationCodesTable.GetOperations(), auxiliaryTable, symbolicNames);
-            fp.Run();
+            var fp = new FirstPass(
+                initCode, 
+                operationCodesTable.GetOperations(), 
+                auxiliaryTable, 
+                symbolicNamesTable
+                );
+            
+                firstPassResult = fp.Run();
 
             btn_firstPass.Enabled = false;
             btn_secondPass.Enabled = true;
@@ -94,6 +104,12 @@ public partial class Form1 : Form
     {
         try
         {
+            var sp = new SecondPass( 
+                firstPassResult,
+                binaryCodeTextBox
+            );
+            sp.Run();
+            
             btn_firstPass.Enabled = true;
             btn_secondPass.Enabled = false;
         }

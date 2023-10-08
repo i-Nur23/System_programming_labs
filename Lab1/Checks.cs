@@ -3,11 +3,6 @@ using System.Text.RegularExpressions;
 
 namespace Lab1;
 
-public enum Line {
-    DIRECTIVE,
-    COMMAND
-}
-
 public static class Checks
 {
     private static List<string> directives = new List<string> { "START", "END", "BYTE", "WORD", "RESB", "RESW" };
@@ -68,11 +63,29 @@ public static class Checks
         return true;
     }
 
-    public static bool IsDirectAddressing(string operand)
+    public static bool IsNumber(string str)
     {
-        return registers.IndexOf(operand.ToUpper()) != -1 || Int32.TryParse(operand, out _);
+        return Int32.TryParse(str, out _);
     }
 
-        
+    public static bool IsByteArray(string str)
+    {
+        return (str[0] == 'x' || str[0] == 'X') && str[1] == (char)39 && str[str.Length - 1] == (char)39;
+    }
     
+    public static bool IsCharString(string str)
+    {
+        return (str[0] == 'c' || str[0] == 'C') && str[1] == (char)39 && str[str.Length - 1] == (char)39;
+    }
+
+    public static bool IsDirectAddressing(string operand)
+    {
+        return registers.IndexOf(operand.ToUpper()) != -1 || IsConstant(operand);
+    }
+
+    public static bool IsConstant(string operand)
+    {
+        return IsNumber(operand) || IsByteArray(operand) || IsCharString(operand);
+    }
+
 }

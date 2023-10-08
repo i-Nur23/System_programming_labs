@@ -38,20 +38,7 @@ public class FirstPass
         this.symbolicNamesTable = symbolicNamesTable;
     }
 
-
-    public string ToTwoDigits(string initStr)
-    {
-        var strWithZeros = "00" + initStr;
-        return strWithZeros.Substring(strWithZeros.Length - 2);
-    }
-    
-    public string ToSixDigits(string initStr)
-    {
-        var strWithZeros = "000000" + initStr;
-        return strWithZeros.Substring(strWithZeros.Length - 6);
-    }
-
-    public void Run()
+    public FirstPassResult Run()
     {
         var linesCount = code.Count;
         string[] splittedLine;
@@ -79,12 +66,24 @@ public class FirstPass
                     HandleCommand(splittedLine, i, name);
                     break;
             }
+
+            auxiliaryOperations[i].LineType = line;
+            
+            if (countAddress > MAX_MEMORY_VOLUME)
+            {
+                throw new Exception("Ошибка. Произошло переполнение памяти");
+            }
         }
 
-        if (countAddress > MAX_MEMORY_VOLUME)
+        if (!isStarted)
         {
-            throw new Exception("Ошибка. Произошло переполнение памяти");
-        } 
+            throw new Exception("Ошибка. В программе должна присутствовать директива START");
+        }
+        
+        if (!isEnded)
+        {
+            throw new Exception("Ошибка. В программе должна присутствовать директива END");
+        }
 
         foreach (var op in auxiliaryOperations)
         {
@@ -95,6 +94,14 @@ public class FirstPass
         {
             symbolicNamesTable.Add(name);
         }
+
+        return new FirstPassResult
+        {
+            AuxiliaryOperations = auxiliaryOperations,
+            SymbolicNames = symbolicNames,
+            ProgramLength = countAddress - loadAddress,
+            LoadAddress = loadAddress
+        };
     }
 
     // Обработка команд
@@ -117,7 +124,11 @@ public class FirstPass
                 throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
             }
             
-            symbolicNames.Add(new SymbolicName() { Name = line[0].ToUpper(), Address = ToSixDigits(countAddress.ToString("X"))});
+            symbolicNames.Add(new SymbolicName()
+            {
+                Name = line[0].ToUpper(), 
+                Address = Converters.ToSixDigits(countAddress.ToString("X"))
+            });
             
             binaryCode = operation.BinaryCode * 4 + (Checks.IsDirectAddressing(line[2]) ? 0 : 1);
         }
@@ -128,8 +139,8 @@ public class FirstPass
 
         var auxOperation = new AuxiliaryOperation
         {
-            Address = ToSixDigits(countAddress.ToString("X")),
-            BinaryCode = ToTwoDigits(binaryCode.ToString("X"))
+            Address = Converters.ToSixDigits(countAddress.ToString("X")),
+            BinaryCode = Converters.ToTwoDigits(binaryCode.ToString("X"))
         };
 
         if (line[0] != commandName)
@@ -194,6 +205,11 @@ public class FirstPass
                     throw new Exception("В адресе загрузки указано не число");
                 }
 
+                if (line[0].Length > 6)
+                {
+                    throw new Exception("Строка 1. Имя программы должно содержать не более 6 символов");
+                }
+
                 if (loadAddress < 0)
                 {
                     throw new Exception("В адресе загрузки указано отрицательное число");
@@ -228,7 +244,11 @@ public class FirstPass
                 if (line.Length == 1)
                 {
                     endAddress = loadAddress;
-                    auxiliaryOperations.Add(new AuxiliaryOperation { Address = ToSixDigits(countAddress.ToString("X")), BinaryCode = "END" });
+                    auxiliaryOperations.Add(new AuxiliaryOperation
+                    {
+                        Address = Converters.ToSixDigits(countAddress.ToString("X")), 
+                        BinaryCode = "END"
+                    });
                     break;
                 }
 
@@ -250,10 +270,12 @@ public class FirstPass
                 }
 
                 auxiliaryOperations.Add(new AuxiliaryOperation { 
-                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
                     BinaryCode = "END", 
                     FirstOperand = line[1] 
                 });
+
+                isEnded = true;
 
                 break;
             case "BYTE":
@@ -301,10 +323,10 @@ public class FirstPass
                     throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
                 }
                 
-                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0]});
+                symbolicNames.Add(new SymbolicName { Address = Converters.ToSixDigits(countAddress.ToString("X")), Name = line[0]});
                 
                 auxiliaryOperations.Add(new AuxiliaryOperation { 
-                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
                     BinaryCode = "BYTE", 
                     FirstOperand = line[2]
                 });
@@ -330,10 +352,14 @@ public class FirstPass
                     throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
                 }
                 
-                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
+                symbolicNames.Add(new SymbolicName
+                {
+                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
+                    Name = line[0].ToUpper()
+                });
                 
                 auxiliaryOperations.Add(new AuxiliaryOperation { 
-                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
                     BinaryCode = "WORD", 
                     FirstOperand = line[2]
                 });
@@ -359,10 +385,10 @@ public class FirstPass
                     throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
                 }
                 
-                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
+                symbolicNames.Add(new SymbolicName { Address = Converters.ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
                 
                 auxiliaryOperations.Add(new AuxiliaryOperation { 
-                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
                     BinaryCode = "RESB", 
                     FirstOperand = line[2]
                 });
@@ -388,10 +414,10 @@ public class FirstPass
                     throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
                 }
                 
-                symbolicNames.Add(new SymbolicName { Address = ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
+                symbolicNames.Add(new SymbolicName { Address = Converters.ToSixDigits(countAddress.ToString("X")), Name = line[0].ToUpper()});
                 
                 auxiliaryOperations.Add(new AuxiliaryOperation { 
-                    Address = ToSixDigits(countAddress.ToString("X")), 
+                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
                     BinaryCode = "RESW", 
                     FirstOperand = line[2]
                 });
