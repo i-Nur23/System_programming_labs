@@ -13,4 +13,9 @@ public class BinaryCodeTextBox
     {
         _textBox.Text = String.Join('\n', lines);
     }
+
+    public void Clear()
+    {
+        _textBox.Clear();
+    }
 }

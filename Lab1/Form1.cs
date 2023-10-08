@@ -78,15 +78,16 @@ public partial class Form1 : Form
             TB_firstPassError.Clear();
             auxiliaryTable.Clear();
             symbolicNamesTable.Clear();
+            binaryCodeTextBox.Clear();
 
             var fp = new FirstPass(
-                initCode, 
-                operationCodesTable.GetOperations(), 
-                auxiliaryTable, 
+                initCode,
+                operationCodesTable.GetOperations(),
+                auxiliaryTable,
                 symbolicNamesTable
                 );
-            
-                firstPassResult = fp.Run();
+
+            firstPassResult = fp.Run();
 
             btn_firstPass.Enabled = false;
             btn_secondPass.Enabled = true;
@@ -104,12 +105,12 @@ public partial class Form1 : Form
     {
         try
         {
-            var sp = new SecondPass( 
+            var sp = new SecondPass(
                 firstPassResult,
                 binaryCodeTextBox
             );
             sp.Run();
-            
+
             btn_firstPass.Enabled = true;
             btn_secondPass.Enabled = false;
         }
@@ -117,5 +118,32 @@ public partial class Form1 : Form
         {
             TB_secondPassError.Text = ex.Message;
         }
+    }
+
+    // Отмена всех проходов при изменении исходного кода
+    private void tb_initCode_TextChanged(object sender, EventArgs e)
+    {
+        ClearAll();
+    }
+
+    // Отмена всех проходов при изменении ТКО
+    private void dg_operCodes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+    {
+        ClearAll();
+    }
+
+    private void ClearAll()
+    {
+        TB_firstPassError.Clear();
+        TB_secondPassError.Clear();
+
+        auxiliaryTable?.Clear();
+        symbolicNamesTable?.Clear();
+        binaryCodeTextBox?.Clear();
+    }
+
+    private void panel1_Paint(object sender, PaintEventArgs e)
+    {
+
     }
 }
