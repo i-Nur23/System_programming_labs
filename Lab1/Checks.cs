@@ -21,18 +21,19 @@ public static class Checks
         var CommandsCount = 0;
         var DirectivesCount = 0;
 
-        foreach (var item in line)
+        foreach (var lineItem in line)
         {
+            var item = lineItem.ToUpper();
             if (isDirective(item))
             {
                 DirectivesCount++;
-                name = item.ToUpper();
+                name = item;
             }
 
             else if (operations.FirstOrDefault(op => op.MnemonicCode == item) != null)
             {
                 CommandsCount++;
-                name = item.ToUpper();
+                name = item;
             }
         }
 

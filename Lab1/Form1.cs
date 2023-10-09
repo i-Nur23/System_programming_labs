@@ -94,6 +94,7 @@ public partial class Form1 : Form
         }
         catch (Exception ex)
         {
+            //TB_firstPassError.Text = ex.StackTrace;
             TB_firstPassError.Text = ex.Message;
         }
 
@@ -116,6 +117,7 @@ public partial class Form1 : Form
         }
         catch (Exception ex)
         {
+            //TB_secondPassError.Text = ex.StackTrace;
             TB_secondPassError.Text = ex.Message;
         }
     }
@@ -140,10 +142,8 @@ public partial class Form1 : Form
         auxiliaryTable?.Clear();
         symbolicNamesTable?.Clear();
         binaryCodeTextBox?.Clear();
-    }
 
-    private void panel1_Paint(object sender, PaintEventArgs e)
-    {
-
+        btn_firstPass.Enabled = true;
+        btn_secondPass.Enabled = false;
     }
 }

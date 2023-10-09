@@ -50,6 +50,7 @@ public class FirstPass
                 .Split(" ")
                 .Where(el => el.Length > 0)
                 .ToArray();
+            
             if (splittedLine.Length > 4)
             {
                 throw new Exception($"Строка {i + 1}: неверный формат строки - больше 4-х элементов");
@@ -117,7 +118,7 @@ public class FirstPass
         
         int binaryCode;
 
-        if (line[0] != commandName)
+        if (line[0].ToUpper() != commandName)
         {
             if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
             {
@@ -130,11 +131,25 @@ public class FirstPass
                 Address = Converters.ToSixDigits(countAddress.ToString("X"))
             });
             
-            binaryCode = operation.BinaryCode * 4 + (Checks.IsDirectAddressing(line[2]) ? 0 : 1);
+            if (line.Length == 2 || Checks.IsDirectAddressing(line[2]))
+            {
+                binaryCode = operation.BinaryCode * 4;
+            }
+            else
+            {
+                binaryCode = operation.BinaryCode * 4 + 1;
+            }
         }
         else
         {
-            binaryCode = operation.BinaryCode * 4 + (Checks.IsDirectAddressing(line[1]) ? 0 : 1);
+            if (line.Length == 1 || Checks.IsDirectAddressing(line[1]))
+            {
+                binaryCode = operation.BinaryCode * 4;
+            }
+            else
+            {
+                binaryCode = operation.BinaryCode * 4 + 1;
+            }
         }
 
         var auxOperation = new AuxiliaryOperation
