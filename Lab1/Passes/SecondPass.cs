@@ -79,7 +79,9 @@ public class SecondPass
 
     private void CreateModuleEnd()
     {
-        binaryCodeLines.Add($"E {Converters.ToSixDigits(_auxiliaryOperations[_auxiliaryOperations.Count - 1].FirstOperand)}");
+        binaryCodeLines.Add(
+            $"E {Converters.ToSixDigits(_auxiliaryOperations[_auxiliaryOperations.Count - 1].FirstOperand 
+                                        ?? _loadAddress.ToString("X"))}");
     }
 
     private string GetRecordForCommand(int i)

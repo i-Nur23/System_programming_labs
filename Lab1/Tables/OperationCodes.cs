@@ -42,6 +42,11 @@ namespace Lab1.Tables
                 }
 
                 mnemonicCode = mnemonicCodeCell.ToString().ToUpper();
+                
+                if (mnemonicCode.Length > 7)
+                {
+                    throw new Exception($"ТКО, строка {i + 1}: мнемоника должна содержать не более 7 символов");
+                }
 
                 if (Checks.isDirective(mnemonicCode) || Checks.isRegister(mnemonicCode))
                 {

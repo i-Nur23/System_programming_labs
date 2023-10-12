@@ -115,6 +115,11 @@ public class FirstPass
         {
             throw new Exception($"Строка {index + 1}: строка должна содержать или команду, или директиву");
         }
+
+        if (line[0].ToUpper() != commandName && line[1].ToUpper() != commandName)
+        {
+            throw new Exception($"Строка {index}: в строке не может более одной метки");
+        }
         
         int binaryCode;
 
@@ -192,6 +197,11 @@ public class FirstPass
     // Обработка директив
     private void HandleDirective(string[] line, int index, string dirName) 
     {
+        if (line[0].ToUpper() != dirName && line[1].ToUpper() != dirName)
+        {
+            throw new Exception($"Строка {index}: в строке не может более одной метки");
+        }
+        
         switch (dirName)
         {
             case "START":
@@ -256,6 +266,8 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: в строке с директивой END не должно быть метки");
                 }
 
+                isEnded = true;
+                
                 if (line.Length == 1)
                 {
                     endAddress = loadAddress;
@@ -289,8 +301,6 @@ public class FirstPass
                     BinaryCode = "END", 
                     FirstOperand = line[1] 
                 });
-
-                isEnded = true;
 
                 break;
             case "BYTE":

@@ -11,9 +11,9 @@ public class AuxiliaryOperation
 
     public string BinaryCode { get; set; }
 
-    public string FirstOperand { get; set; } = null;
+    public string? FirstOperand { get; set; } = null;
 
-    public string SecondOperand { get; set; } = null;
+    public string? SecondOperand { get; set; } = null;
 
     public Line LineType { get; set; }    
 }
