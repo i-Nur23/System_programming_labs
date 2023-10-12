@@ -147,7 +147,12 @@ public class FirstPass
         }
         else
         {
-            if (line.Length == 1 || Checks.IsDirectAddressing(line[1]))
+            if (lineElementsCount == 4)
+            {
+                throw new Exception($"Строка {index}: oперандов не может быть более 2-х");
+            }
+            
+            if (lineElementsCount == 1 || Checks.IsDirectAddressing(line[1]))
             {
                 binaryCode = operation.BinaryCode * 4;
             }
@@ -200,6 +205,11 @@ public class FirstPass
         if (line[0].ToUpper() != dirName && line[1].ToUpper() != dirName)
         {
             throw new Exception($"Строка {index}: в строке не может более одной метки");
+        }
+
+        if (line[0].ToUpper() == dirName && line.Length == 4)
+        {
+            throw new Exception($"Строка {index}: oперандов не может быть более 2-х");   
         }
         
         switch (dirName)
