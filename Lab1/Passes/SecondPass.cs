@@ -150,7 +150,7 @@ public class SecondPass
             return charsStringBuilder.ToString();
         }
 
-        if (Checks.isRegister(operand))
+        if (Checks.IsRegister(operand))
         {
             return Converters.ToTwoDigits(operand.Substring(1));
         }

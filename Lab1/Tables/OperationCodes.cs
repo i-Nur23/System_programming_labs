@@ -48,7 +48,12 @@ namespace Lab1.Tables
                     throw new Exception($"ТКО, строка {i + 1}: мнемоника должна содержать не более 7 символов");
                 }
 
-                if (Checks.isDirective(mnemonicCode) || Checks.isRegister(mnemonicCode))
+                if (!Checks.IsOnlyLettersAndNumbers(mnemonicCode))
+                {
+                    throw new Exception($"ТКО, строка {i + 1}: мнемоника должна содержать только латинские буквы и цифры");
+                }
+
+                if (Checks.IsDirective(mnemonicCode) || Checks.IsRegister(mnemonicCode))
                 {
                     throw new Exception($"ТКО, строка {i + 1}: мнемоника не может быть зарезервированным именем");
                 }

@@ -1,7 +1,6 @@
 ﻿using Lab1.Models;
 using Lab1.Tables;
 using System.Globalization;
-using System.Net.Mail;
 
 namespace Lab1.Passes;
 
@@ -125,6 +124,12 @@ public class FirstPass
 
         if (line[0].ToUpper() != commandName)
         {
+            if (!Checks.IsRightLabel(line[0].ToUpper()))
+            {
+                throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
+                                    $"и начинаться с буквы или знака \'_\'");
+            }
+            
             if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
             {
                 throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
@@ -172,11 +177,23 @@ public class FirstPass
         {
             if (lineElementsCount > 2)
             {
+                if (!Checks.IsConstant(line[2]) && !Checks.IsRegister(line[2]) &&
+                    !Checks.IsOnlyLettersAndNumbers(line[2]))
+                {
+                    throw new Exception($"Строка {index}: недопустимые символы");
+                }
+                
                 auxOperation.FirstOperand = line[2];
             }
 
             if (lineElementsCount == 4)
             {
+                if (!Checks.IsConstant(line[3]) && !Checks.IsRegister(line[3]) &&
+                    !Checks.IsOnlyLettersAndNumbers(line[3]))
+                {
+                    throw new Exception($"Строка {index}: недопустимые символы");
+                }
+                
                 auxOperation.SecondOperand = line[3];
             }
         }
@@ -184,11 +201,23 @@ public class FirstPass
         {
             if (lineElementsCount > 1)
             {
+                if (!Checks.IsConstant(line[1]) && !Checks.IsRegister(line[1]) &&
+                    !Checks.IsOnlyLettersAndNumbers(line[1]))
+                {
+                    throw new Exception($"Строка {index}: недопустимые символы");
+                }
+                
                 auxOperation.FirstOperand = line[1];
             }
 
             if (lineElementsCount == 3)
             {
+                if (!Checks.IsConstant(line[2]) && !Checks.IsRegister(line[2]) &&
+                    !Checks.IsOnlyLettersAndNumbers(line[2]))
+                {
+                    throw new Exception($"Строка {index}: недопустимые символы");
+                }
+                
                 auxOperation.SecondOperand = line[2];
             }
         }
@@ -243,6 +272,11 @@ public class FirstPass
                 if (line[0].Length > 6)
                 {
                     throw new Exception("Строка 1. Имя программы должно содержать не более 6 символов");
+                }
+
+                if (!Checks.IsOnlyLettersAndNumbers(line[0].ToUpper()))
+                {
+                    throw new Exception("Строка 1. Имя программы должно содержать только латиницу и цифры");
                 }
 
                 if (loadAddress < 0)

@@ -8,12 +8,22 @@ public static class Checks
     private static List<string> directives = new List<string> { "START", "END", "BYTE", "WORD", "RESB", "RESW" };
     private static List<string> registers = new List<string> { "R0", "R1", "R2", "R3", "R4", "R5", "R6","R7","R8","R9",
         "R10","R11","R12", "R13","R14","R15" };
-    
     private static List<char> hexSymbols = new List<char> { '0', '1', '2', '3', '4', '5', '6', '7','8','9','A','B','C','D','E','F' };
+
+    public static bool IsDirective(string command)
+    {
+        return directives.IndexOf(command.ToUpper()) != -1;
+    }
     
-    public static Func<string, bool> isDirective = command => directives.IndexOf(command.ToUpper()) != -1;
+    public static bool IsRegister(string command)
+    {
+        return registers.IndexOf(command.ToUpper()) != -1;
+    }
     
-    public static Func<string, bool> isRegister = command => registers.IndexOf(command.ToUpper()) != -1;
+    public static bool IsLetter(char symbol)
+    {
+        return symbol >= 65 && symbol <= 90;
+    }
 
     public static Line getTypeOfLine(string[] line, int index, List<Operation> operations, out string name)
     {
@@ -24,7 +34,7 @@ public static class Checks
         foreach (var lineItem in line)
         {
             var item = lineItem.ToUpper();
-            if (isDirective(item))
+            if (IsDirective(item))
             {
                 DirectivesCount++;
                 name = item;
@@ -87,6 +97,33 @@ public static class Checks
     public static bool IsConstant(string operand)
     {
         return IsNumber(operand) || IsByteArray(operand) || IsCharString(operand);
+    }
+    
+    public static bool IsStartsWithUnderscoreOrLetter(string operand)
+    {
+        if (operand.Length == 0) return false;
+        var symbol = (operand.ToUpper())[0];
+        return IsLetter(symbol) || symbol == '_';
+    }
+
+    public static bool IsOnlyLettersAndNumbers(string operand)
+    {
+        if (Char.IsDigit(operand[0])) return false;
+        
+        foreach (var symbol in operand.ToUpper())
+        {
+            if (!(IsLetter(symbol) || Char.IsDigit(symbol)))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static bool IsRightLabel(string label)
+    {
+        return IsOnlyLettersAndNumbers(label) && IsStartsWithUnderscoreOrLetter(label);
     }
 
 }
