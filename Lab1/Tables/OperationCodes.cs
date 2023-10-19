@@ -72,7 +72,7 @@ namespace Lab1.Tables
 
                 if (!isBinaryCodeOk)
                 {
-                    throw new Exception($"ТКО, строка {i + 1}: двоичный код должен быть числом");
+                    throw new Exception($"ТКО, строка {i + 1}: двоичный код должен быть положительным числом");
                 }
 
                 if (binaryCode < 1 || binaryCode > 63)

@@ -57,7 +57,7 @@ public class SecondPass
         var nextAddress = Int32.Parse(_auxiliaryOperations[i + 1].Address, NumberStyles.HexNumber);
 
         sb.Append(Converters.ToTwoDigits((nextAddress - currentAddress).ToString("X")));
-        sb.Append(" ");
+        //sb.Append(" ");
 
         Func<int, string> GetRecord = _ => "";
 
@@ -90,10 +90,10 @@ public class SecondPass
         
         var commandStringBuilder = new StringBuilder(command.BinaryCode);
 
-        commandStringBuilder.Append(" ");
-        commandStringBuilder.Append(ProcessOperand(command.FirstOperand));
-        commandStringBuilder.Append(" "); 
-        commandStringBuilder.Append(ProcessOperand(command.SecondOperand));
+        //commandStringBuilder.Append(" ");
+        commandStringBuilder.Append(ProcessOperand(command.FirstOperand, command.BinaryCode));
+        //commandStringBuilder.Append(" "); 
+        commandStringBuilder.Append(ProcessOperand(command.SecondOperand, command.BinaryCode));
 
         return commandStringBuilder.ToString();
     }
@@ -104,7 +104,9 @@ public class SecondPass
     {
         var directiveStringBuilder = new StringBuilder();
 
-        switch (_auxiliaryOperations[i].BinaryCode.ToUpper())
+        var operation = _auxiliaryOperations[i].BinaryCode.ToUpper(); 
+        
+        switch (operation)
         {
             case "RESB":
             case "RESW":
@@ -112,9 +114,9 @@ public class SecondPass
             
             case "BYTE":
             case "WORD":
-                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].FirstOperand));
-                directiveStringBuilder.Append(" "); 
-                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].SecondOperand));
+                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].FirstOperand, operation));
+                //directiveStringBuilder.Append(" "); 
+                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].SecondOperand, operation));
                 break;
         }
         
@@ -122,14 +124,22 @@ public class SecondPass
     }
 
 
-    private string ProcessOperand(string operand)
+    private string ProcessOperand(string operand, string operation)
     {
         if (operand == null) return "";
         
         if (Checks.IsNumber(operand))
         {
             var hexNumber = Int32.Parse(operand);
-            return Converters.ToSixDigits(hexNumber.ToString("X"));
+            switch (operation)
+            {
+                case "BYTE":
+                    return Converters.ToTwoDigits(hexNumber.ToString("X"));
+                case "WORD":
+                    return Converters.ToSixDigits(hexNumber.ToString("X"));
+                default:
+                    return Converters.ToSixDigits(hexNumber.ToString("X"));        
+            }
         }
 
         if (Checks.IsByteArray(operand))
@@ -152,7 +162,7 @@ public class SecondPass
 
         if (Checks.IsRegister(operand))
         {
-            return Converters.ToTwoDigits(operand.Substring(1));
+            return Int32.Parse(operand.Substring(1)).ToString("X");
         }
 
         var symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand));

@@ -103,7 +103,7 @@ public static class Checks
     {
         if (operand.Length == 0) return false;
         var symbol = (operand.ToUpper())[0];
-        return IsLetter(symbol) || symbol == '_';
+        return operand[0] == 95 || IsLetter(symbol);
     }
 
     public static bool IsOnlyLettersAndNumbers(string operand)
@@ -112,7 +112,7 @@ public static class Checks
         
         foreach (var symbol in operand.ToUpper())
         {
-            if (!(IsLetter(symbol) || Char.IsDigit(symbol)))
+            if (!(IsLetter(symbol) || Char.IsDigit(symbol) || symbol == 95))
             {
                 return false;
             }

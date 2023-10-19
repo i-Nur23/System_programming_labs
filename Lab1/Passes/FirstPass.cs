@@ -11,6 +11,9 @@ public class FirstPass
     private int endAddress;
 
     private const int MAX_MEMORY_VOLUME = 16_777_216;
+    private const int MAX_BYTE = 255;
+    private const int MAX_WORD = 16_777_215;
+    
 
     private readonly List<string> code;
     private readonly List<Operation> operations;
@@ -133,6 +136,11 @@ public class FirstPass
             if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
             {
                 throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
+            }
+
+            if (Checks.IsRegister(line[0].ToUpper()))
+            {
+                throw new Exception($"Строка {index}: метка не может быть зарезервированным словом");
             }
             
             symbolicNames.Add(new SymbolicName()
@@ -266,7 +274,12 @@ public class FirstPass
 
                 if (!isAddressOk)
                 {
-                    throw new Exception("В адресе загрузки указано не число");
+                    throw new Exception("В адресе загрузки указано не число или отрицательное число");
+                }
+
+                if (loadAddress == 0)
+                {
+                    throw new Exception("В адресе загрузки не может быть 0");
                 }
 
                 if (line[0].Length > 6)
@@ -290,6 +303,11 @@ public class FirstPass
                 }
 
                 countAddress = loadAddress;
+
+                if (Checks.IsRegister(line[0]))
+                {
+                    throw new Exception("Имя программы не может быть регистром");
+                }
 
                 auxiliaryOperations.Add(new AuxiliaryOperation
                 {
@@ -352,6 +370,11 @@ public class FirstPass
                 {
                     throw new Exception($"Строка { index + 1}: неверный формат директивы BYTE");
                 }
+                
+                if (Checks.IsRegister(line[0]))
+                {
+                    throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
+                }
 
                 int addingToAddress = 1;
 
@@ -363,9 +386,7 @@ public class FirstPass
                     {
                         throw new Exception($"Строка { index + 1 }: неверный операнд");    
                     }
-                    
-                    
-                    
+
                     if (line[2][0] == 'x' || line[2][0] == 'X')
                     {
                         if (!Checks.IsContainsOnlyHexSymbols(line[2].Substring(2, line[2].Length - 3)))
@@ -385,6 +406,11 @@ public class FirstPass
                     {
                         throw new Exception($"Строка { index + 1 }: неверный операнд");
                     }
+                }
+
+                if (byteOperand < 0 || byteOperand > MAX_BYTE)
+                {
+                    throw new Exception($"Строка { index + 1 }: отрицательный или превышающий максимальное значение операнд");
                 }
 
                 if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
@@ -408,12 +434,22 @@ public class FirstPass
                 {
                     throw new Exception($"Строка {index + 1}: неверный формат директивы WORD");
                 }
+                
+                if (Checks.IsRegister(line[0]))
+                {
+                    throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
+                }
 
                 var isWordOperandOk = Int32.TryParse(line[2], out int wordOperand);
 
                 if (!isWordOperandOk)
                 {
-                    throw new Exception($"Строка { index + 1 }: операнд должен быть числом");
+                    throw new Exception($"Строка { index + 1 }: операнд не является числом или превышает допустимые значения");
+                }
+                
+                if (wordOperand < 0 || wordOperand > MAX_WORD)
+                {
+                    throw new Exception($"Строка { index + 1 }: отрицательный или превышающий максимальное значение операнд");
                 }
                 
                 if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
@@ -441,12 +477,17 @@ public class FirstPass
                 {
                     throw new Exception($"Строка {index + 1}: неверный формат директивы RESB");
                 }
+                
+                if (Checks.IsRegister(line[0]))
+                {
+                    throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
+                }
 
                 var isResbOperandOk = Int32.TryParse(line[2], out int resbOperand);
 
                 if (!isResbOperandOk)
                 {
-                    throw new Exception($"Строка { index + 1 }: операнд должен быть числом");
+                    throw new Exception($"Строка { index + 1 }: операнд не является числом или превышает допустимые значения");
                 }
                 
                 if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
@@ -470,12 +511,17 @@ public class FirstPass
                 {
                     throw new Exception($"Строка {index + 1}: неверный формат директивы RESW");
                 }
+                
+                if (Checks.IsRegister(line[0]))
+                {
+                    throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
+                }
 
                 var isReswOperandOk = Int32.TryParse(line[2], out int reswOperand);
 
                 if (!isReswOperandOk)
                 {
-                    throw new Exception($"Строка { index + 1 }: операнд должен быть числом");
+                    throw new Exception($"Строка { index + 1 }: операнд не является числом или превышает допустимые значения");
                 }
                 
                 if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
