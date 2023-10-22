@@ -49,7 +49,7 @@ public class FirstPass
         {
             splittedLine = code[i]
                 .Trim()
-                .Split(" ")
+                .Split(" ",3)
                 .Where(el => el.Length > 0)
                 .ToArray();
             
