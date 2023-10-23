@@ -1,4 +1,6 @@
-﻿namespace Lab1;
+﻿using System.Text.RegularExpressions;
+
+namespace Lab1;
 
 public static class Converters
 {
@@ -12,5 +14,10 @@ public static class Converters
     {
         var strWithZeros = "00000" + initStr;
         return strWithZeros.Substring(strWithZeros.Length - 6);
+    }
+    
+    public static string DeleteExtraWhitespace(string text)
+    {
+        return Regex.Replace(text, @"\s+", " ");
     }
 }

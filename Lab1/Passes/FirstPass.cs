@@ -1,6 +1,7 @@
 ﻿using Lab1.Models;
 using Lab1.Tables;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Lab1.Passes;
 
@@ -47,16 +48,11 @@ public class FirstPass
 
         for (int i = 0; i < linesCount; i++)
         {
-            splittedLine = code[i]
+            splittedLine = Converters.DeleteExtraWhitespace(code[i])
                 .Trim()
                 .Split(" ",3)
                 .Where(el => el.Length > 0)
                 .ToArray();
-            
-            if (splittedLine.Length > 4)
-            {
-                throw new Exception($"Строка {i + 1}: неверный формат строки - больше 4-х элементов");
-            }
 
             Line line = Checks.getTypeOfLine(splittedLine, i, operations, out string name);
 
@@ -111,8 +107,7 @@ public class FirstPass
     private void HandleCommand(string[] line, int index, string commandName)
     {
         var operation = operations.FirstOrDefault(op => op.MnemonicCode == commandName.ToUpper());
-        var lineElementsCount = line.Length;
-        
+
         if (operation == null)
         {
             throw new Exception($"Строка {index + 1}: строка должна содержать или команду, или директиву");
@@ -120,10 +115,25 @@ public class FirstPass
 
         if (line[0].ToUpper() != commandName && line[1].ToUpper() != commandName)
         {
-            throw new Exception($"Строка {index}: в строке не может более одной метки");
+            throw new Exception($"Строка {index + 1}: в строке не может более одной метки");
         }
         
         int binaryCode;
+
+        if (line.Length == 3 && !Checks.IsConstant(line[2]))
+        {
+            line = line
+                .Take(2)
+                .Concat(line[2].Split(" "))
+                .ToArray();
+        }
+        
+        var lineElementsCount = line.Length;
+
+        if (lineElementsCount > 4)
+        {
+            throw new Exception($"Строка {index + 1}: более 4-x частей быть не может!");
+        } 
 
         if (line[0].ToUpper() != commandName)
         {
@@ -140,7 +150,7 @@ public class FirstPass
 
             if (Checks.IsRegister(line[0].ToUpper()))
             {
-                throw new Exception($"Строка {index}: метка не может быть зарезервированным словом");
+                throw new Exception($"Строка {index + 1}: метка не может быть зарезервированным словом");
             }
             
             symbolicNames.Add(new SymbolicName()
@@ -153,6 +163,10 @@ public class FirstPass
             {
                 binaryCode = operation.BinaryCode * 4;
             }
+            else if (Checks.IsRightRelativeAddressing(line[2]))
+            {
+                binaryCode = operation.BinaryCode * 4 + 2;
+            }
             else
             {
                 binaryCode = operation.BinaryCode * 4 + 1;
@@ -162,12 +176,16 @@ public class FirstPass
         {
             if (lineElementsCount == 4)
             {
-                throw new Exception($"Строка {index}: oперандов не может быть более 2-х");
+                throw new Exception($"Строка {index + 1}: oперандов не может быть более 2-х");
             }
             
             if (lineElementsCount == 1 || Checks.IsDirectAddressing(line[1]))
             {
                 binaryCode = operation.BinaryCode * 4;
+            }
+            else if (Checks.IsRightRelativeAddressing(line[1]))
+            {
+                binaryCode = operation.BinaryCode * 4 + 2;
             }
             else
             {
@@ -186,9 +204,9 @@ public class FirstPass
             if (lineElementsCount > 2)
             {
                 if (!Checks.IsConstant(line[2]) && !Checks.IsRegister(line[2]) &&
-                    !Checks.IsOnlyLettersAndNumbers(line[2]))
+                    !Checks.IsOnlyLettersAndNumbers(line[2]) && !Checks.IsRightRelativeAddressing(line[2]))
                 {
-                    throw new Exception($"Строка {index}: недопустимые символы");
+                    throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
                 
                 auxOperation.FirstOperand = line[2];
@@ -197,9 +215,9 @@ public class FirstPass
             if (lineElementsCount == 4)
             {
                 if (!Checks.IsConstant(line[3]) && !Checks.IsRegister(line[3]) &&
-                    !Checks.IsOnlyLettersAndNumbers(line[3]))
+                    !Checks.IsOnlyLettersAndNumbers(line[3]) && !Checks.IsRightRelativeAddressing(line[3]))
                 {
-                    throw new Exception($"Строка {index}: недопустимые символы");
+                    throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
                 
                 auxOperation.SecondOperand = line[3];
@@ -210,9 +228,9 @@ public class FirstPass
             if (lineElementsCount > 1)
             {
                 if (!Checks.IsConstant(line[1]) && !Checks.IsRegister(line[1]) &&
-                    !Checks.IsOnlyLettersAndNumbers(line[1]))
+                    !Checks.IsOnlyLettersAndNumbers(line[1]) && !Checks.IsRightRelativeAddressing(line[1]))
                 {
-                    throw new Exception($"Строка {index}: недопустимые символы");
+                    throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
                 
                 auxOperation.FirstOperand = line[1];
@@ -221,9 +239,9 @@ public class FirstPass
             if (lineElementsCount == 3)
             {
                 if (!Checks.IsConstant(line[2]) && !Checks.IsRegister(line[2]) &&
-                    !Checks.IsOnlyLettersAndNumbers(line[2]))
+                    !Checks.IsOnlyLettersAndNumbers(line[2]) && !Checks.IsRightRelativeAddressing(line[3]))
                 {
-                    throw new Exception($"Строка {index}: недопустимые символы");
+                    throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
                 
                 auxOperation.SecondOperand = line[2];
@@ -241,12 +259,12 @@ public class FirstPass
     {
         if (line[0].ToUpper() != dirName && line[1].ToUpper() != dirName)
         {
-            throw new Exception($"Строка {index}: в строке не может более одной метки");
+            throw new Exception($"Строка {index + 1}: в строке не может более одной метки");
         }
 
         if (line[0].ToUpper() == dirName && line.Length == 4)
         {
-            throw new Exception($"Строка {index}: oперандов не может быть более 2-х");   
+            throw new Exception($"Строка {index + 1}: oперандов не может быть более 2-х");   
         }
         
         switch (dirName)
@@ -258,28 +276,22 @@ public class FirstPass
                     throw new Exception("Директива START должна встречаться один раз и в начале программы");
                 }
 
-                if (line.Length != 3)
-                {
-                    throw new Exception("Не указано имя программы или адрес загрузки");
-                }
+                loadAddress = 0;
 
                 isStarted = true;
 
-                var isAddressOk = Int32.TryParse(
-                    line[2], 
-                    NumberStyles.HexNumber, 
-                    CultureInfo.CurrentCulture,
-                    out loadAddress
-                );
+                if (line.Length == 3) {
+                    var isAddressOk = Int32.TryParse(
+                        line[2],
+                        NumberStyles.HexNumber,
+                        CultureInfo.CurrentCulture,
+                        out int addressInCommand
+                    );
 
-                if (!isAddressOk)
-                {
-                    throw new Exception("В адресе загрузки указано не число или отрицательное число");
-                }
-
-                if (loadAddress == 0)
-                {
-                    throw new Exception("В адресе загрузки не может быть 0");
+                    if (!isAddressOk || addressInCommand != 0)
+                    {
+                        throw new Exception("В адресе загрузки должен быть 0");
+                    }
                 }
 
                 if (line[0].Length > 6)
@@ -313,7 +325,7 @@ public class FirstPass
                 {
                     Address = line[0],
                     BinaryCode = line[1],
-                    FirstOperand = line[2],
+                    FirstOperand =  line.Length == 3 ? "000000" : null,
                 });
                 
                 break;
@@ -454,7 +466,7 @@ public class FirstPass
                 
                 if (symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper()) != null)
                 {
-                    throw new Exception($"строка {index + 1}: метка {line[0].ToUpper()} уже есть в ТСИ");
+                    throw new Exception($"строка { index + 1 }: метка {line[0].ToUpper()} уже есть в ТСИ");
                 }
                 
                 symbolicNames.Add(new SymbolicName

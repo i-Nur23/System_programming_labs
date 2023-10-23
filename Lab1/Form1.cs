@@ -15,38 +15,28 @@ public partial class Form1 : Form
         auxiliaryTable = new AuxiliaryTable(dg_aux);
         symbolicNamesTable = new SymbolicNames(dg_symbolNames);
         binaryCodeTextBox = new BinaryCodeTextBox(TB_binaryCode);
+        settingTable = new SettingTable(dg_setting);
 
         FillExample();
+
+        comboBox1.SelectedIndex = 0;
     }
 
     private OperationCodes operationCodesTable;
     private AuxiliaryTable auxiliaryTable;
     private SymbolicNames symbolicNamesTable;
     private BinaryCodeTextBox binaryCodeTextBox;
+    private SettingTable settingTable;
+
 
     private FirstPassResult firstPassResult;
 
     // Заполнение примера из лекции
     private void FillExample()
     {
-        var code = new string[] {
-            "Prog1 START 100",
-            "   JMP L1",
-            "A1 RESB 10",
-            "A2 RESW 20",
-            "B1 WORD 4096",
-            "B2 BYTE x\'2F4c008A\'",
-            "B3 BYTE c\'Hello!\'",
-            "B4 BYTE 120",
-            "L1 LOADR1 B1",
-            "   LOADR2 B4",
-            "   ADD R1 R2",
-            "   SAVER1 B1",
-            "   END 100",
-        };
+        var code = DirectCode();
 
         tb_initCode.AppendText(String.Join('\n', code));
-
 
         var operations = new List<Operation> {
             new Operation { MnemonicCode = "JMP", BinaryCode = 1, CommandLength = 4 },
@@ -59,6 +49,65 @@ public partial class Form1 : Form
         operationCodesTable?.AddRange(operations);
 
     }
+
+    private string[] DirectCode()
+    {
+        return new string[] {
+            "Prog1 START",
+            "   JMP L1",
+            "A1 RESB 10",
+            "A2 RESW 20",
+            "B1 WORD 4096",
+            "B2 BYTE x\'2F4c008A\'",
+            "B3 BYTE c\'Hello!\'",
+            "B4 BYTE 120",
+            "L1 LOADR1 B1",
+            "   LOADR2 B4",
+            "   ADD R1 R2",
+            "   SAVER1 B1",
+            "   END",
+        };
+    }
+
+    private string[] RelativeCode()
+    {
+        return new string[] {
+            "Prog1 START",
+            "   JMP [L1]",
+            "A1 RESB 10",
+            "A2 RESW 20",
+            "B1 WORD 4096",
+            "B2 BYTE x\'2F4c008A\'",
+            "B3 BYTE c\'Hello!\'",
+            "B4 BYTE 120",
+            "L1 LOADR1 [B1]",
+            "   LOADR2 [B4]",
+            "   ADD R1 R2",
+            "   SAVER1 [B1]",
+            "   END",
+        };
+    }
+
+    private string[] MixedCode()
+    {
+        return new string[] {
+            "Prog1 START",
+            "   JMP [L1]",
+            "A1 RESB 10",
+            "A2 RESW 20",
+            "B1 WORD 4096",
+            "B2 BYTE x\'2F4c008A\'",
+            "B3 BYTE c\'Hello!\'",
+            "B4 BYTE 120",
+            "L1 LOADR1 B1",
+            "   LOADR2 [B4]",
+            "   ADD R1 R2",
+            "   SAVER1 [B1]",
+            "   END",
+        };
+    }
+
+
 
     // Удаление пустых строк из кода
     private List<string> GetInitCodeWithoutEmptyRows()
@@ -79,6 +128,7 @@ public partial class Form1 : Form
             auxiliaryTable.Clear();
             symbolicNamesTable.Clear();
             binaryCodeTextBox.Clear();
+            settingTable.Clear();
 
             var fp = new FirstPass(
                 initCode,
@@ -108,7 +158,8 @@ public partial class Form1 : Form
         {
             var sp = new SecondPass(
                 firstPassResult,
-                binaryCodeTextBox
+                binaryCodeTextBox,
+                settingTable
             );
             sp.Run();
 
@@ -117,8 +168,8 @@ public partial class Form1 : Form
         }
         catch (Exception ex)
         {
-            //TB_secondPassError.Text = ex.StackTrace;
-            TB_secondPassError.Text = ex.Message;
+            TB_secondPassError.Text = ex.StackTrace;
+            //TB_secondPassError.Text = ex.Message;
         }
     }
 
@@ -142,8 +193,32 @@ public partial class Form1 : Form
         auxiliaryTable?.Clear();
         symbolicNamesTable?.Clear();
         binaryCodeTextBox?.Clear();
+        settingTable?.Clear();
 
         btn_firstPass.Enabled = true;
         btn_secondPass.Enabled = false;
+    }
+
+    private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string[] code = null;
+
+        switch (comboBox1.SelectedIndex)
+        {
+            case 0:
+                code = DirectCode();
+                break;
+            case 1:
+                code = RelativeCode();
+                break;
+            case 2:
+                code = MixedCode();
+                break;
+        }
+
+        ClearAll();
+        tb_initCode.Clear();
+
+        tb_initCode.AppendText(String.Join('\n', code));
     }
 }

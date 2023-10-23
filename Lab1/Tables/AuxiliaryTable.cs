@@ -5,8 +5,6 @@ namespace Lab1.Tables;
 public class AuxiliaryTable
 {
     private readonly DataGridView table;
-    
-    private List<AuxiliaryOperation> operations = new List<AuxiliaryOperation>();
 
     public AuxiliaryTable(DataGridView table)
     {

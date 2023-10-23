@@ -126,4 +126,17 @@ public static class Checks
         return IsOnlyLettersAndNumbers(label) && IsStartsWithUnderscoreOrLetter(label);
     }
 
+    public static bool IsRightRelativeAddressing(string operand)
+    {
+        var upperOperand = operand.ToUpper();
+        if (upperOperand[0] != '[' || upperOperand[operand.Length - 1] != ']')
+        {
+            return false;
+        }
+
+        var label = upperOperand.Substring(1, operand.Length - 2);
+
+        return IsRightLabel(label) && !IsDirective(label) && !IsRegister(label);
+    }
+
 }

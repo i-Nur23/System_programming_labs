@@ -51,18 +51,24 @@ partial class Form1
         dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
         Column4 = new DataGridViewTextBoxColumn();
         panel3 = new Panel();
+        label6 = new Label();
+        dg_setting = new DataGridView();
         label8 = new Label();
         label7 = new Label();
         TB_secondPassError = new RichTextBox();
         TB_binaryCode = new RichTextBox();
         btn_firstPass = new Button();
         btn_secondPass = new Button();
+        label9 = new Label();
+        comboBox1 = new ComboBox();
+        dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
         panel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).BeginInit();
         panel2.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_symbolNames).BeginInit();
         ((System.ComponentModel.ISupportInitialize)dg_aux).BeginInit();
         panel3.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dg_setting).BeginInit();
         SuspendLayout();
         // 
         // panel1
@@ -297,6 +303,8 @@ partial class Form1
         // 
         panel3.BackColor = SystemColors.ControlLight;
         panel3.BorderStyle = BorderStyle.Fixed3D;
+        panel3.Controls.Add(label6);
+        panel3.Controls.Add(dg_setting);
         panel3.Controls.Add(label8);
         panel3.Controls.Add(label7);
         panel3.Controls.Add(TB_secondPassError);
@@ -307,10 +315,39 @@ partial class Form1
         panel3.Size = new Size(583, 908);
         panel3.TabIndex = 2;
         // 
+        // label6
+        // 
+        label6.AutoSize = true;
+        label6.Location = new Point(192, 11);
+        label6.Margin = new Padding(4, 0, 4, 0);
+        label6.Name = "label6";
+        label6.Size = new Size(169, 25);
+        label6.TabIndex = 8;
+        label6.Text = "Таблица настройки";
+        // 
+        // dg_setting
+        // 
+        dg_setting.AllowUserToAddRows = false;
+        dg_setting.AllowUserToDeleteRows = false;
+        dg_setting.AllowUserToResizeColumns = false;
+        dg_setting.AllowUserToResizeRows = false;
+        dg_setting.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
+        dg_setting.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        dg_setting.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn6 });
+        dg_setting.Location = new Point(125, 40);
+        dg_setting.Margin = new Padding(4);
+        dg_setting.Name = "dg_setting";
+        dg_setting.ReadOnly = true;
+        dg_setting.RowHeadersVisible = false;
+        dg_setting.RowHeadersWidth = 51;
+        dg_setting.RowTemplate.Height = 29;
+        dg_setting.Size = new Size(311, 246);
+        dg_setting.TabIndex = 8;
+        // 
         // label8
         // 
         label8.AutoSize = true;
-        label8.Location = new Point(211, 6);
+        label8.Location = new Point(223, 290);
         label8.Margin = new Padding(4, 0, 4, 0);
         label8.Name = "label8";
         label8.Size = new Size(133, 25);
@@ -339,11 +376,11 @@ partial class Form1
         // 
         // TB_binaryCode
         // 
-        TB_binaryCode.Location = new Point(4, 36);
+        TB_binaryCode.Location = new Point(4, 319);
         TB_binaryCode.Margin = new Padding(4);
         TB_binaryCode.Name = "TB_binaryCode";
         TB_binaryCode.ReadOnly = true;
-        TB_binaryCode.Size = new Size(570, 531);
+        TB_binaryCode.Size = new Size(570, 395);
         TB_binaryCode.TabIndex = 8;
         TB_binaryCode.Text = "";
         // 
@@ -372,12 +409,43 @@ partial class Form1
         btn_secondPass.UseVisualStyleBackColor = true;
         btn_secondPass.Click += btn_secondPass_Click;
         // 
+        // label9
+        // 
+        label9.AutoSize = true;
+        label9.Location = new Point(1192, 928);
+        label9.Margin = new Padding(4, 0, 4, 0);
+        label9.Name = "label9";
+        label9.Size = new Size(145, 25);
+        label9.TabIndex = 11;
+        label9.Text = "Выбор примера";
+        // 
+        // comboBox1
+        // 
+        comboBox1.DisplayMember = "0";
+        comboBox1.FormattingEnabled = true;
+        comboBox1.Items.AddRange(new object[] { "Только прямая адресация", "Только относительная адресация", "Смешанная адресация" });
+        comboBox1.Location = new Point(1344, 925);
+        comboBox1.Name = "comboBox1";
+        comboBox1.Size = new Size(427, 33);
+        comboBox1.TabIndex = 12;
+        comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
+        // 
+        // dataGridViewTextBoxColumn6
+        // 
+        dataGridViewTextBoxColumn6.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn6.HeaderText = "Адрес";
+        dataGridViewTextBoxColumn6.MinimumWidth = 6;
+        dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+        dataGridViewTextBoxColumn6.ReadOnly = true;
+        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(10F, 25F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = SystemColors.ControlLightLight;
         ClientSize = new Size(1786, 973);
+        Controls.Add(comboBox1);
+        Controls.Add(label9);
         Controls.Add(btn_secondPass);
         Controls.Add(btn_firstPass);
         Controls.Add(panel3);
@@ -398,7 +466,9 @@ partial class Form1
         ((System.ComponentModel.ISupportInitialize)dg_aux).EndInit();
         panel3.ResumeLayout(false);
         panel3.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)dg_setting).EndInit();
         ResumeLayout(false);
+        PerformLayout();
     }
 
     #endregion
@@ -431,4 +501,9 @@ partial class Form1
     private DataGridViewTextBoxColumn Column3;
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+    private DataGridView dg_setting;
+    private Label label6;
+    private Label label9;
+    private ComboBox comboBox1;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
 }

@@ -11,21 +11,25 @@ public class SecondPass
     private readonly List<AuxiliaryOperation> _auxiliaryOperations;
     private readonly List<SymbolicName> _symbolicNames;
     private readonly BinaryCodeTextBox _binaryCodeTextBox;
+    private readonly SettingTable _settingTable;
     private readonly int _loadAddress;
     private readonly int _programLength;
+    private readonly List<string> _settings = new List<string>();
 
     private List<string> binaryCodeLines = new List<string>();
 
     public SecondPass(
         FirstPassResult firstPassResult,
-        BinaryCodeTextBox binaryCodeTextBox
-        )
+        BinaryCodeTextBox binaryCodeTextBox,
+        SettingTable settingTable
+    )
     {
         _loadAddress = firstPassResult.LoadAddress;
         _programLength = firstPassResult.ProgramLength;
         _auxiliaryOperations = firstPassResult.AuxiliaryOperations;
         _symbolicNames = firstPassResult.SymbolicNames;
         _binaryCodeTextBox = binaryCodeTextBox;
+        _settingTable = settingTable;
     }
     
     public void Run()
@@ -35,6 +39,13 @@ public class SecondPass
         for (int i = 1; i < _auxiliaryOperations.Count - 1; i++)
         {
             CreateBodyLine(i);    
+        }
+
+        _settingTable.Add(_settings);
+        
+        foreach (var setting in _settings)
+        {
+            CreateModificationLine(setting);
         }
         
         CreateModuleEnd();
@@ -77,6 +88,12 @@ public class SecondPass
 
     }
 
+    private void CreateModificationLine(string setting)
+    {
+        binaryCodeLines.Add($"M {setting}");
+    }
+    
+
     private void CreateModuleEnd()
     {
         binaryCodeLines.Add(
@@ -91,9 +108,9 @@ public class SecondPass
         var commandStringBuilder = new StringBuilder(command.BinaryCode);
 
         //commandStringBuilder.Append(" ");
-        commandStringBuilder.Append(ProcessOperand(command.FirstOperand, command.BinaryCode));
+        commandStringBuilder.Append(ProcessOperand(command.FirstOperand, command.BinaryCode, i));
         //commandStringBuilder.Append(" "); 
-        commandStringBuilder.Append(ProcessOperand(command.SecondOperand, command.BinaryCode));
+        commandStringBuilder.Append(ProcessOperand(command.SecondOperand, command.BinaryCode, i));
 
         return commandStringBuilder.ToString();
     }
@@ -114,9 +131,9 @@ public class SecondPass
             
             case "BYTE":
             case "WORD":
-                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].FirstOperand, operation));
+                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].FirstOperand, operation, i));
                 //directiveStringBuilder.Append(" "); 
-                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].SecondOperand, operation));
+                directiveStringBuilder.Append(ProcessOperand(_auxiliaryOperations[i].SecondOperand, operation, i));
                 break;
         }
         
@@ -124,7 +141,7 @@ public class SecondPass
     }
 
 
-    private string ProcessOperand(string operand, string operation)
+    private string ProcessOperand(string operand, string operation, int index)
     {
         if (operand == null) return "";
         
@@ -165,13 +182,32 @@ public class SecondPass
             return Int32.Parse(operand.Substring(1)).ToString("X");
         }
 
-        var symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand));
+        SymbolicName symbolicName;
+
+        if (Checks.IsRightRelativeAddressing(operand))
+        {
+            symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand.Substring(1, operand.Length - 2)));
+
+            if (symbolicName == null)
+            {
+                throw new Exception($"Ошибка. Имя {operand.Substring(1, operand.Length - 2)} не найдено в ТСИ");
+            }
+
+            var symbolAddress = Int32.Parse(symbolicName.Address, NumberStyles.HexNumber);
+            var nextAddress = Int32.Parse(_auxiliaryOperations[index + 1].Address, NumberStyles.HexNumber);
+
+            return (symbolAddress - nextAddress).ToString("X");
+        }
+
+        symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand));
 
         if (symbolicName == null)
         {
             throw new Exception($"Ошибка. Имя {operand} не найдено в ТСИ");
         }
 
+        _settings.Add(_auxiliaryOperations[index].Address);
+        
         return symbolicName.Address;
         
     }
