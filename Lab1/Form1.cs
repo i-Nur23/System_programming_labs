@@ -1,7 +1,7 @@
+using Lab1.Exceptions;
 using Lab1.Models;
 using Lab1.Passes;
 using Lab1.Tables;
-using System.Runtime.CompilerServices;
 
 namespace Lab1;
 
@@ -19,7 +19,11 @@ public partial class Form1 : Form
 
         FillExample();
 
+        Addressing.CreateAddressing(0);
+        addressing = Addressing.GetAddressing();
+
         comboBox1.SelectedIndex = 0;
+       
     }
 
     private OperationCodes operationCodesTable;
@@ -27,6 +31,8 @@ public partial class Form1 : Form
     private SymbolicNames symbolicNamesTable;
     private BinaryCodeTextBox binaryCodeTextBox;
     private SettingTable settingTable;
+
+    private Addressing addressing;
 
 
     private FirstPassResult firstPassResult;
@@ -142,6 +148,12 @@ public partial class Form1 : Form
             btn_firstPass.Enabled = false;
             btn_secondPass.Enabled = true;
         }
+        
+        catch (WrongAddressException ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
+        
         catch (Exception ex)
         {
             //TB_firstPassError.Text = ex.StackTrace;
@@ -166,10 +178,11 @@ public partial class Form1 : Form
             btn_firstPass.Enabled = true;
             btn_secondPass.Enabled = false;
         }
+        
         catch (Exception ex)
         {
-            TB_secondPassError.Text = ex.StackTrace;
-            //TB_secondPassError.Text = ex.Message;
+            //TB_secondPassError.Text = ex.StackTrace;
+            TB_secondPassError.Text = ex.Message;
         }
     }
 
@@ -207,12 +220,15 @@ public partial class Form1 : Form
         {
             case 0:
                 code = DirectCode();
+                addressing.AddressType = AddressingType.DIRECT;
                 break;
             case 1:
                 code = RelativeCode();
+                addressing.AddressType = AddressingType.RELATIVE;
                 break;
             case 2:
                 code = MixedCode();
+                addressing.AddressType = AddressingType.MIXED;
                 break;
         }
 

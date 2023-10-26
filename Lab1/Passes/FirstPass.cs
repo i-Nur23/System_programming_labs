@@ -2,6 +2,7 @@
 using Lab1.Tables;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Lab1.Exceptions;
 
 namespace Lab1.Passes;
 
@@ -27,6 +28,8 @@ public class FirstPass
     private List<AuxiliaryOperation> auxiliaryOperations = new List<AuxiliaryOperation>();
     private List<SymbolicName> symbolicNames = new List<SymbolicName>();
 
+    private Addressing addressing;
+
     public FirstPass(
         List<string> code, 
         List<Operation> operations, 
@@ -39,6 +42,8 @@ public class FirstPass
         this.operations = operations;
         this.auxiliaryTable = auxiliaryTable;   
         this.symbolicNamesTable = symbolicNamesTable;
+
+        addressing = Addressing.GetAddressing();
     }
 
     public FirstPassResult Run()
@@ -137,6 +142,7 @@ public class FirstPass
 
         if (line[0].ToUpper() != commandName)
         {
+
             if (!Checks.IsRightLabel(line[0].ToUpper()))
             {
                 throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
@@ -150,7 +156,7 @@ public class FirstPass
 
             if (Checks.IsRegister(line[0].ToUpper()))
             {
-                throw new Exception($"Строка {index + 1}: метка не может быть зарезервированным словом");
+                throw new Exception($"Строка {index + 1}: метка не может быть регистром");
             }
             
             symbolicNames.Add(new SymbolicName()
@@ -165,11 +171,45 @@ public class FirstPass
             }
             else if (Checks.IsRightRelativeAddressing(line[2]))
             {
+                if (addressing.AddressType == AddressingType.DIRECT)
+                {
+                    throw new WrongAddressException(index + 1);
+                }    
+                
                 binaryCode = operation.BinaryCode * 4 + 2;
             }
             else
             {
+                if (!Checks.IsRightLabel(line[2]))
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат операнда");
+                }
+                
+                if (addressing.AddressType == AddressingType.RELATIVE)
+                {
+                    throw new WrongAddressException(index + 1);
+                }
+                
                 binaryCode = operation.BinaryCode * 4 + 1;
+            }
+
+            if (lineElementsCount == 4)
+            {
+                if (!Checks.IsDirectAddressing(line[3]))
+                {
+                    if (Checks.IsRightRelativeAddressing(line[3]) && addressing.AddressType == AddressingType.DIRECT)
+                    {
+                        throw new WrongAddressException(index + 1);    
+                    }
+                    else if (!Checks.IsRightLabel(line[3]))
+                    {
+                        throw new Exception($"Строка {index + 1}: неверный формат операнда");
+                    }
+                    else if (addressing.AddressType == AddressingType.RELATIVE)
+                    {
+                        throw new WrongAddressException(index + 1);
+                    }
+                }    
             }
         }
         else
@@ -185,11 +225,44 @@ public class FirstPass
             }
             else if (Checks.IsRightRelativeAddressing(line[1]))
             {
+                if (addressing.AddressType == AddressingType.DIRECT)
+                {
+                    throw new WrongAddressException(index + 1);
+                }
+                
                 binaryCode = operation.BinaryCode * 4 + 2;
             }
             else
             {
+                if (!Checks.IsRightLabel(line[1]))
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат операнда");
+                }
+                
+                if (addressing.AddressType == AddressingType.RELATIVE)
+                {
+                    throw new WrongAddressException(index + 1);
+                }
+                
                 binaryCode = operation.BinaryCode * 4 + 1;
+            }
+            
+            if (lineElementsCount == 3)
+            {
+                if (!Checks.IsDirectAddressing(line[2]))
+                {
+                    if (Checks.IsRightRelativeAddressing(line[2]) && addressing.AddressType == AddressingType.DIRECT)
+                    {
+                        throw new WrongAddressException(index + 1);    
+                    } else if (!Checks.IsRightLabel(line[2]))
+                    {
+                        throw new Exception($"Строка {index + 1}: неверный формат операнда");
+                    }
+                    else if (addressing.AddressType == AddressingType.RELATIVE)
+                    {
+                        throw new WrongAddressException(index + 1);
+                    }
+                }    
             }
         }
 
@@ -239,7 +312,7 @@ public class FirstPass
             if (lineElementsCount == 3)
             {
                 if (!Checks.IsConstant(line[2]) && !Checks.IsRegister(line[2]) &&
-                    !Checks.IsOnlyLettersAndNumbers(line[2]) && !Checks.IsRightRelativeAddressing(line[3]))
+                    !Checks.IsOnlyLettersAndNumbers(line[2]) && !Checks.IsRightRelativeAddressing(line[2]))
                 {
                     throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
@@ -387,6 +460,12 @@ public class FirstPass
                 {
                     throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
                 }
+                
+                if (!Checks.IsRightLabel(line[0]))
+                {
+                    throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
+                                        $"и начинаться с буквы или знака \'_\'");
+                }
 
                 int addingToAddress = 1;
 
@@ -451,6 +530,12 @@ public class FirstPass
                 {
                     throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
                 }
+                
+                if (!Checks.IsRightLabel(line[0]))
+                {
+                    throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
+                                        $"и начинаться с буквы или знака \'_\'");
+                }
 
                 var isWordOperandOk = Int32.TryParse(line[2], out int wordOperand);
 
@@ -494,6 +579,12 @@ public class FirstPass
                 {
                     throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
                 }
+                
+                if (!Checks.IsRightLabel(line[0]))
+                {
+                    throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
+                                        $"и начинаться с буквы или знака \'_\'");
+                }
 
                 var isResbOperandOk = Int32.TryParse(line[2], out int resbOperand);
 
@@ -529,6 +620,12 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: метка не может быть регистром");
                 }
 
+                if (!Checks.IsRightLabel(line[0]))
+                {
+                    throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
+                                        $"и начинаться с буквы или знака \'_\'");
+                }
+                
                 var isReswOperandOk = Int32.TryParse(line[2], out int reswOperand);
 
                 if (!isReswOperandOk)

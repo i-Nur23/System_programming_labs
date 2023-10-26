@@ -57,7 +57,20 @@ public static class Checks
             throw new Exception($"Строка {index + 1}: в строке должна быть или директива, или команда");
         }
 
-        if (CommandsCount > 0) return Line.COMMAND;
+        if (CommandsCount > 0)
+        {
+            if (CommandsCount > 1)
+            {
+                throw new($"Строка {index + 1}: в строке не может быть более одной команды");
+            }
+            
+            return Line.COMMAND;
+        }
+
+        if (DirectivesCount > 1)
+        {
+            throw new($"Строка {index + 1}: в строке не может быть более одной директивы");
+        }
 
         return Line.DIRECTIVE;
        
@@ -103,7 +116,7 @@ public static class Checks
     {
         if (operand.Length == 0) return false;
         var symbol = (operand.ToUpper())[0];
-        return operand[0] == 95 || IsLetter(symbol);
+        return symbol == 95 || IsLetter(symbol);
     }
 
     public static bool IsOnlyLettersAndNumbers(string operand)

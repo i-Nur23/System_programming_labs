@@ -67,8 +67,8 @@ public class SecondPass
         var currentAddress = Int32.Parse(_auxiliaryOperations[i].Address, NumberStyles.HexNumber);
         var nextAddress = Int32.Parse(_auxiliaryOperations[i + 1].Address, NumberStyles.HexNumber);
 
-        sb.Append(Converters.ToTwoDigits((nextAddress - currentAddress).ToString("X")));
-        //sb.Append(" ");
+        sb.Append(Converters.ToTwoDigits(((nextAddress - currentAddress) * 2).ToString("X")));
+        sb.Append(" ");
 
         Func<int, string> GetRecord = _ => "";
 
@@ -196,7 +196,12 @@ public class SecondPass
             var symbolAddress = Int32.Parse(symbolicName.Address, NumberStyles.HexNumber);
             var nextAddress = Int32.Parse(_auxiliaryOperations[index + 1].Address, NumberStyles.HexNumber);
 
-            return (symbolAddress - nextAddress).ToString("X");
+            string relativeAddress = (symbolAddress - nextAddress).ToString("X");
+            if (relativeAddress.Length > 6)
+            {
+                relativeAddress = relativeAddress.Substring(relativeAddress.Length - 6);
+            }
+            return relativeAddress;
         }
 
         symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand));
