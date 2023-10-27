@@ -23,7 +23,7 @@ public partial class Form1 : Form
         addressing = Addressing.GetAddressing();
 
         comboBox1.SelectedIndex = 0;
-       
+
     }
 
     private OperationCodes operationCodesTable;
@@ -148,12 +148,12 @@ public partial class Form1 : Form
             btn_firstPass.Enabled = false;
             btn_secondPass.Enabled = true;
         }
-        
+
         catch (WrongAddressException ex)
         {
             MessageBox.Show(ex.Message);
         }
-        
+
         catch (Exception ex)
         {
             //TB_firstPassError.Text = ex.StackTrace;
@@ -178,7 +178,7 @@ public partial class Form1 : Form
             btn_firstPass.Enabled = true;
             btn_secondPass.Enabled = false;
         }
-        
+
         catch (Exception ex)
         {
             //TB_secondPassError.Text = ex.StackTrace;

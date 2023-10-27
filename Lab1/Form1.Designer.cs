@@ -53,6 +53,7 @@ partial class Form1
         panel3 = new Panel();
         label6 = new Label();
         dg_setting = new DataGridView();
+        dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
         label8 = new Label();
         label7 = new Label();
         TB_secondPassError = new RichTextBox();
@@ -61,7 +62,6 @@ partial class Form1
         btn_secondPass = new Button();
         label9 = new Label();
         comboBox1 = new ComboBox();
-        dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
         panel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).BeginInit();
         panel2.SuspendLayout();
@@ -344,6 +344,14 @@ partial class Form1
         dg_setting.Size = new Size(311, 246);
         dg_setting.TabIndex = 8;
         // 
+        // dataGridViewTextBoxColumn6
+        // 
+        dataGridViewTextBoxColumn6.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn6.HeaderText = "Адрес";
+        dataGridViewTextBoxColumn6.MinimumWidth = 6;
+        dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+        dataGridViewTextBoxColumn6.ReadOnly = true;
+        // 
         // label8
         // 
         label8.AutoSize = true;
@@ -430,14 +438,6 @@ partial class Form1
         comboBox1.TabIndex = 12;
         comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
         // 
-        // dataGridViewTextBoxColumn6
-        // 
-        dataGridViewTextBoxColumn6.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn6.HeaderText = "Адрес";
-        dataGridViewTextBoxColumn6.MinimumWidth = 6;
-        dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
-        dataGridViewTextBoxColumn6.ReadOnly = true;
-        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(10F, 25F);
@@ -456,7 +456,7 @@ partial class Form1
         Margin = new Padding(4);
         Name = "Form1";
         StartPosition = FormStartPosition.Manual;
-        Text = "Двухпросмотровый ассемблер в абсолютном формате";
+        Text = "Двухпросмотровый ассемблер в перемещаемом формате";
         panel1.ResumeLayout(false);
         panel1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).EndInit();
