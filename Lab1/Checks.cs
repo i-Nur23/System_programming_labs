@@ -142,6 +142,12 @@ public static class Checks
     public static bool IsRightRelativeAddressing(string operand)
     {
         var upperOperand = operand.ToUpper();
+
+        if (operand.Length <= 2)
+        {
+            return false;
+        }
+        
         if (upperOperand[0] != '[' || upperOperand[operand.Length - 1] != ']')
         {
             return false;

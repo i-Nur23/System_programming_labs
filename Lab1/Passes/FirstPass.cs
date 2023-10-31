@@ -12,7 +12,7 @@ public class FirstPass
     private int countAddress;
     private int endAddress;
 
-    private const int MAX_MEMORY_VOLUME = 16_777_216;
+    private const int MAX_MEMORY_VOLUME = 16_777_215;
     private const int MAX_BYTE = 255;
     private const int MAX_WORD = 16_777_215;
     
@@ -132,6 +132,10 @@ public class FirstPass
                 .Concat(line[2].Split(" "))
                 .ToArray();
         }
+
+        var commandLength = operations
+            .FirstOrDefault(x => x.MnemonicCode == commandName)
+            .CommandLength;
         
         var lineElementsCount = line.Length;
 
@@ -276,10 +280,25 @@ public class FirstPass
         {
             if (lineElementsCount > 2)
             {
+                if (commandLength == 1)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
                 if (!Checks.IsConstant(line[2]) && !Checks.IsRegister(line[2]) &&
                     !Checks.IsOnlyLettersAndNumbers(line[2]) && !Checks.IsRightRelativeAddressing(line[2]))
                 {
                     throw new Exception($"Строка {index + 1}: недопустимые символы");
+                }
+
+                if (Checks.IsRegister(line[2]) && commandLength == 4)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
+                if (!Checks.IsRegister(line[2]) && commandLength == 2)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
                 
                 auxOperation.FirstOperand = line[2];
@@ -293,6 +312,16 @@ public class FirstPass
                     throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
                 
+                if (Checks.IsRegister(line[3]) && commandLength == 4)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
+                if (!Checks.IsRegister(line[3]) && commandLength == 2)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
                 auxOperation.SecondOperand = line[3];
             }
         }
@@ -300,10 +329,25 @@ public class FirstPass
         {
             if (lineElementsCount > 1)
             {
+                if (commandLength == 1)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
                 if (!Checks.IsConstant(line[1]) && !Checks.IsRegister(line[1]) &&
                     !Checks.IsOnlyLettersAndNumbers(line[1]) && !Checks.IsRightRelativeAddressing(line[1]))
                 {
                     throw new Exception($"Строка {index + 1}: недопустимые символы");
+                }
+                
+                if (Checks.IsRegister(line[1]) && commandLength == 4)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
+                if (!Checks.IsRegister(line[1]) && commandLength == 2)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
                 
                 auxOperation.FirstOperand = line[1];
@@ -317,6 +361,16 @@ public class FirstPass
                     throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
                 
+                if (Checks.IsRegister(line[2]) && commandLength == 4)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
+                if (!Checks.IsRegister(line[2]) && commandLength == 2)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+                
                 auxOperation.SecondOperand = line[2];
             }
         }
@@ -324,6 +378,10 @@ public class FirstPass
         auxiliaryOperations.Add(auxOperation);
 
         countAddress += operation.CommandLength;
+        if (countAddress > MAX_MEMORY_VOLUME)
+        {
+            throw new Exception("Ошибка. Произошло переполнение памяти");
+        }
 
     }
     
@@ -518,6 +576,10 @@ public class FirstPass
                 });
 
                 countAddress += addingToAddress;
+                if (countAddress > MAX_MEMORY_VOLUME)
+                {
+                    throw new Exception("Ошибка. Произошло переполнение памяти");
+                }
 
                 break;
             case "WORD":
@@ -567,6 +629,10 @@ public class FirstPass
                 });
 
                 countAddress += 3;
+                if (countAddress > MAX_MEMORY_VOLUME)
+                {
+                    throw new Exception("Ошибка. Произошло переполнение памяти");
+                }
 
                 break;
             case "RESB":
@@ -607,6 +673,10 @@ public class FirstPass
                 });
 
                 countAddress += resbOperand;
+                if (countAddress > MAX_MEMORY_VOLUME)
+                {
+                    throw new Exception("Ошибка. Произошло переполнение памяти");
+                }
 
                 break;
             case "RESW":
@@ -647,6 +717,10 @@ public class FirstPass
                 });
 
                 countAddress += reswOperand * 3;
+                if (countAddress > MAX_MEMORY_VOLUME)
+                {
+                    throw new Exception("Ошибка. Произошло переполнение памяти");
+                }
                 break;
             default:
                 break;

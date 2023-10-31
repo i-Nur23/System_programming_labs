@@ -107,9 +107,9 @@ namespace Lab1.Tables
                     throw new Exception($"ТКО, строка {i + 1}: двоичный код должен быть больше 0");
                 }
 
-                if (length < 1 || length > 4)
+                if (length < 1 || length > 4 || length == 3)
                 {
-                    throw new Exception($"ТКО, строка {i + 1}: длина команды должно быть числом от 1 до 4");
+                    throw new Exception($"ТКО, строка {i + 1}: длина команды должно быть числом 1, 2 или 4");
                 }
 
                 operations.Add(new Operation { MnemonicCode = mnemonicCode, BinaryCode = binaryCode, CommandLength = length });

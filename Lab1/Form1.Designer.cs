@@ -321,9 +321,9 @@ partial class Form1
         label6.Location = new Point(192, 11);
         label6.Margin = new Padding(4, 0, 4, 0);
         label6.Name = "label6";
-        label6.Size = new Size(169, 25);
+        label6.Size = new Size(199, 25);
         label6.TabIndex = 8;
-        label6.Text = "Таблица настройки";
+        label6.Text = "Таблица модификации";
         // 
         // dg_setting
         // 
@@ -456,7 +456,7 @@ partial class Form1
         Margin = new Padding(4);
         Name = "Form1";
         StartPosition = FormStartPosition.Manual;
-        Text = "Двухпросмотровый ассемблер в перемещаемом формате";
+        Text = "Двухпросмотровый ассемблер для программ в перемещаемом формате";
         panel1.ResumeLayout(false);
         panel1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).EndInit();
