@@ -37,7 +37,7 @@ public partial class Form1 : Form
 
     private FirstPassResult firstPassResult;
 
-    // Заполнение примера из лекции
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     private void FillExample()
     {
         var code = DirectCode();
@@ -58,64 +58,20 @@ public partial class Form1 : Form
 
     private string[] DirectCode()
     {
-        return new string[] {
-            "Prog1 START",
-            "   JMP L1",
-            "A1 RESB 10",
-            "A2 RESW 20",
-            "B1 WORD 4096",
-            "B2 BYTE x\'2F4c008A\'",
-            "B3 BYTE c\'Hello!\'",
-            "B4 BYTE 120",
-            "L1 LOADR1 B1",
-            "   LOADR2 B4",
-            "   ADD R1 R2",
-            "   SAVER1 B1",
-            "   END",
-        };
+        return File.ReadAllLines("..\\..\\..\\Examples\\direct.txt");
     }
 
     private string[] RelativeCode()
     {
-        return new string[] {
-            "Prog1 START",
-            "   JMP [L1]",
-            "A1 RESB 10",
-            "A2 RESW 20",
-            "B1 WORD 4096",
-            "B2 BYTE x\'2F4c008A\'",
-            "B3 BYTE c\'Hello!\'",
-            "B4 BYTE 120",
-            "L1 LOADR1 [B1]",
-            "   LOADR2 [B4]",
-            "   ADD R1 R2",
-            "   SAVER1 [B1]",
-            "   END",
-        };
+        return File.ReadAllLines("..\\..\\..\\Examples\\relative.txt");
     }
 
     private string[] MixedCode()
     {
-        return new string[] {
-            "Prog1 START",
-            "   JMP [L1]",
-            "A1 RESB 10",
-            "A2 RESW 20",
-            "B1 WORD 4096",
-            "B2 BYTE x\'2F4c008A\'",
-            "B3 BYTE c\'Hello!\'",
-            "B4 BYTE 120",
-            "L1 LOADR1 B1",
-            "   LOADR2 [B4]",
-            "   ADD R1 R2",
-            "   SAVER1 [B1]",
-            "   END",
-        };
+        return File.ReadAllLines("..\\..\\..\\Examples\\mixed.txt");
     }
 
-
-
-    // Удаление пустых строк из кода
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ
     private List<string> GetInitCodeWithoutEmptyRows()
     {
         var initCodeRows = tb_initCode.Text.Split("\n").ToList();
@@ -123,7 +79,7 @@ public partial class Form1 : Form
         return initCodeRows.FindAll(str => !String.IsNullOrWhiteSpace(str));
     }
 
-    // Первый проход
+    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     private void btn_firstPass_Click(object sender, EventArgs e)
     {
         var initCode = GetInitCodeWithoutEmptyRows();
@@ -156,24 +112,28 @@ public partial class Form1 : Form
 
         catch (Exception ex)
         {
-            //TB_firstPassError.Text = ex.StackTrace;
             TB_firstPassError.Text = ex.Message;
+            TB_firstPassError.AppendText(ex.StackTrace);
         }
 
     }
 
 
-    // Второй проход
+    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     private void btn_secondPass_Click(object sender, EventArgs e)
     {
         try
         {
-            var sp = new SecondPass(
-                firstPassResult,
-                binaryCodeTextBox,
-                settingTable
-            );
-            sp.Run();
+
+            foreach (var sectionInfo in firstPassResult.SectionInfos)
+            {
+                var sp = new SecondPass(
+                    sectionInfo,
+                    binaryCodeTextBox,
+                    settingTable
+                    );
+                sp.Run();
+            }
 
             btn_firstPass.Enabled = true;
             btn_secondPass.Enabled = false;
@@ -181,18 +141,18 @@ public partial class Form1 : Form
 
         catch (Exception ex)
         {
-            //TB_secondPassError.Text = ex.StackTrace;
             TB_secondPassError.Text = ex.Message;
+            TB_secondPassError.AppendText(ex.StackTrace);
         }
     }
 
-    // Отмена всех проходов при изменении исходного кода
+    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
     private void tb_initCode_TextChanged(object sender, EventArgs e)
     {
         ClearAll();
     }
 
-    // Отмена всех проходов при изменении ТКО
+    // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
     private void dg_operCodes_CellValueChanged(object sender, DataGridViewCellEventArgs e)
     {
         ClearAll();

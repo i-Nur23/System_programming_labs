@@ -11,7 +11,8 @@ public class BinaryCodeTextBox
 
     public void AddRange(List<string> lines)
     {
-        _textBox.Text = String.Join('\n', lines);
+        _textBox.AppendText(String.Join('\n', lines));
+        _textBox.AppendText("\n");
     }
 
     public void Clear()

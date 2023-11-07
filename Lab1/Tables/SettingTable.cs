@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using Lab1.Models;
 
 namespace Lab1.Tables;
 
@@ -11,11 +12,11 @@ public class SettingTable
         _table = table;
     }
 
-    public void Add(List<string> settings)
+    public void Add(List<Modifier> settings)
     {
         foreach (var setting in settings)
         {
-            _table.Rows.Add(setting);   
+            _table.Rows.Add(setting.Address, setting.Label);   
         }
     }
 

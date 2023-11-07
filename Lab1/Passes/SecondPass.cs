@@ -8,26 +8,29 @@ namespace Lab1.Passes;
 public class SecondPass
 {
 
-    private readonly List<AuxiliaryOperation> _auxiliaryOperations;
-    private readonly List<SymbolicName> _symbolicNames;
     private readonly BinaryCodeTextBox _binaryCodeTextBox;
     private readonly SettingTable _settingTable;
+    private readonly List<AuxiliaryOperation> _auxiliaryOperations;
+    private readonly List<SymbolicName> _symbolicNames;
     private readonly int _loadAddress;
     private readonly int _programLength;
-    private readonly List<string> _settings = new List<string>();
+    private readonly string _sectionName;
+
+    private readonly List<Modifier> _settings = new List<Modifier>();
 
     private List<string> binaryCodeLines = new List<string>();
 
     public SecondPass(
-        FirstPassResult firstPassResult,
+        SectionInfo section,
         BinaryCodeTextBox binaryCodeTextBox,
         SettingTable settingTable
     )
     {
-        _loadAddress = firstPassResult.LoadAddress;
-        _programLength = firstPassResult.ProgramLength;
-        _auxiliaryOperations = firstPassResult.AuxiliaryOperations;
-        _symbolicNames = firstPassResult.SymbolicNames;
+        _loadAddress = section.LoadAddress;
+        _programLength = section.Length;
+        _auxiliaryOperations = section.AuxiliaryOperations;
+        _symbolicNames = section.SymbolicNames;
+        _sectionName = section.Name;
         _binaryCodeTextBox = binaryCodeTextBox;
         _settingTable = settingTable;
     }
@@ -35,8 +38,10 @@ public class SecondPass
     public void Run()
     {
         CreateHeader();
+        var defsCount = CreateDefinitions();
+        var refsCount = CreateReferences();
 
-        for (int i = 1; i < _auxiliaryOperations.Count - 1; i++)
+        for (int i = defsCount + refsCount + 1; i < _auxiliaryOperations.Count - 1; i++)
         {
             CreateBodyLine(i);    
         }
@@ -55,10 +60,39 @@ public class SecondPass
 
     private void CreateHeader()
     {
-        binaryCodeLines.Add($"H {_auxiliaryOperations[0].Address} " +
+        binaryCodeLines.Add($"H {_sectionName} " +
                             $"{Converters.ToSixDigits(_loadAddress.ToString("X"))} " +
                             $"{Converters.ToSixDigits(_programLength.ToString("X"))}");    
     }
+
+    private int CreateDefinitions()
+    {
+        var defs = _symbolicNames.Where(n => n.Type == NameTypes.ExternalName).ToList();
+
+        var defsCount = defs.Count;
+
+        foreach (var def in defs)
+        {
+            binaryCodeLines.Add($"D {def.Name} {def.Address}");
+        }
+
+        return defsCount;
+    }
+
+    private int CreateReferences()
+    {
+        var refs = _symbolicNames.Where(n => n.Type == NameTypes.ExternalReference).ToList();
+
+        var refsCount = refs.Count;
+
+        foreach (var reference in refs)
+        {
+            binaryCodeLines.Add($"R {reference.Name}");
+        }
+
+        return refsCount;
+    }
+
 
     private void CreateBodyLine(int i)
     {
@@ -88,9 +122,9 @@ public class SecondPass
 
     }
 
-    private void CreateModificationLine(string setting)
+    private void CreateModificationLine(Modifier setting)
     {
-        binaryCodeLines.Add($"M {setting}");
+        binaryCodeLines.Add($"M {setting.Address}");
     }
     
 
@@ -186,11 +220,13 @@ public class SecondPass
 
         if (Checks.IsRightRelativeAddressing(operand))
         {
-            symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand.Substring(1, operand.Length - 2)));
+            symbolicName = _symbolicNames
+                .FirstOrDefault(n => String.Equals(n.Name, operand.Substring(1, operand.Length - 2), StringComparison.OrdinalIgnoreCase)
+                && n.Type != NameTypes.ExternalReference );
 
             if (symbolicName == null)
             {
-                throw new Exception($"Ошибка. Имя {operand.Substring(1, operand.Length - 2)} не найдено в ТСИ");
+                HandleException($"Ошибка. Имя {operand.Substring(1, operand.Length - 2)} не найдено в ТСИ");
             }
 
             var symbolAddress = Int32.Parse(symbolicName.Address, NumberStyles.HexNumber);
@@ -204,16 +240,39 @@ public class SecondPass
             return relativeAddress;
         }
 
-        symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand));
+        symbolicName = _symbolicNames.FirstOrDefault(n => String.Equals(n.Name, operand, StringComparison.OrdinalIgnoreCase));
 
         if (symbolicName == null)
         {
-            throw new Exception($"Ошибка. Имя {operand} не найдено в ТСИ");
+            HandleException($"Ошибка. Имя {operand} не найдено ни в ТСИ, ни в ТВС");
         }
 
-        _settings.Add(_auxiliaryOperations[index].Address);
+        if (symbolicName.Type == NameTypes.ExternalReference)
+        {
+            _settings.Add(new Modifier
+            {
+                Address = $"{_auxiliaryOperations[index].Address} {operand}",
+                Label = _sectionName
+            });
+
+            return "000000";
+        }
+
+        _settings.Add(new Modifier
+        {
+            Address = _auxiliaryOperations[index].Address,
+            Label = _sectionName
+        });
         
         return symbolicName.Address;
         
+    }
+
+    private void HandleException(string text)
+    {
+        _settingTable.Clear();
+        _binaryCodeTextBox.Clear();
+
+        throw new Exception(text);
     }
 }

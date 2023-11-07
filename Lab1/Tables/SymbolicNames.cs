@@ -15,7 +15,11 @@ public class SymbolicNames
 
     public void Add(SymbolicName name)
     {
-        table.Rows.Add(name.Name, name.Address);
+        var nameType = name.Type != NameTypes.SymbolicName ?
+            name.Type == NameTypes.ExternalName ? "ВИ" : "ВС"
+            : "";
+
+        table.Rows.Add(name.Name, name.Address, name.Section, nameType);
     }
 
     public void Clear()
