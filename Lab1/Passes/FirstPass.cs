@@ -54,7 +54,7 @@ public class FirstPass
     {
         this.code = code;
         this.operations = operations;
-        this.auxiliaryTable = auxiliaryTable;   
+        this.auxiliaryTable = auxiliaryTable;
         this.symbolicNamesTable = symbolicNamesTable;
 
         addressing = Addressing.GetAddressing();
@@ -65,7 +65,7 @@ public class FirstPass
         var linesCount = code.Count;
         string[] splittedLine;
 
-        for (int i = 0; i < linesCount; i++, currentIndex++)
+        for (int i = 0; i < linesCount && !isEnded; i++, currentIndex++)
         {
             splittedLine = Converters.DeleteExtraWhitespace(code[i])
                 .Trim()
@@ -189,6 +189,11 @@ public class FirstPass
                 throw new Exception($"Строка {index + 1}: метка не может быть регистром");
             }
             
+            if (sectionNames.FirstOrDefault(name => String.Equals(name, line[0], StringComparison.OrdinalIgnoreCase)) != null)
+            {
+                throw new Exception($"Строка {index + 1}: имя метки занято");
+            }
+
             tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper() && n.Section == currentSectionName);
 
             ProcessLabel(tempNameInfo, index, line[0]);
@@ -339,7 +344,7 @@ public class FirstPass
                     throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
 
-                if (Checks.IsRegister(line[2]) && commandLength == 4)
+                if (commandLength == 4 && (Checks.IsRegister(line[2]) || lineElementsCount == 4))
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
@@ -360,7 +365,7 @@ public class FirstPass
                     throw new Exception($"Строка {index + 1}: недопустимые символы");
                 }
                 
-                if (Checks.IsRegister(line[3]) && commandLength == 4)
+                if (commandLength == 4 )
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
@@ -382,6 +387,11 @@ public class FirstPass
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
                 
+                if (commandLength == 4 && lineElementsCount == 3)
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+
                 if (!Checks.IsConstant(line[1]) && !Checks.IsRegister(line[1]) &&
                     !Checks.IsOnlyLettersAndNumbers(line[1]) && !Checks.IsRightRelativeAddressing(line[1]))
                 {
@@ -587,7 +597,7 @@ public class FirstPass
 
                 var exportName = line[1];
 
-                if (tableOfExtdef.IndexOf(exportName.ToUpper()) != -1)
+                if (tableOfExtdef.IndexOf(exportName.ToUpper()) != -1 || tableOfExtdef.IndexOf(exportName) != -1)
                 {
                     throw new Exception($"Строка { index + 1 }: имя не уникально для EXTDEF");
                 }
@@ -631,7 +641,7 @@ public class FirstPass
 
                 var importName = line[1];
 
-                if (tableOfExtdef.IndexOf(importName.ToUpper()) != -1)
+                if (tableOfExtdef.IndexOf(importName.ToUpper()) != -1 || tableOfExtdef.IndexOf(importName) != -1)
                 {
                     throw new Exception($"Строка { index + 1 }: имя не уникально для EXTREF");
                 }
@@ -784,6 +794,11 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: отрицательный или превышающий максимальное значение операнд");
                 }
 
+                if (sectionNames.FirstOrDefault(name => String.Equals(name, byteLabel, StringComparison.OrdinalIgnoreCase)) != null)
+                {
+                    throw new Exception($"Строка {index + 1}: имя метки занято");
+                }
+
                 if (byteLabel != null)
                 {
                     tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == byteLabel.ToUpper() && n.Section == currentSectionName);
@@ -856,6 +871,11 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: отрицательный или превышающий максимальное значение операнд");
                 }
                 
+                if (sectionNames.FirstOrDefault(name => String.Equals(name, wordLabel, StringComparison.OrdinalIgnoreCase)) != null)
+                {
+                    throw new Exception($"Строка {index + 1}: имя метки занято");
+                }
+
                 if (wordLabel != null)
                 {
                     tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == wordLabel.ToUpper() && n.Section == currentSectionName);
@@ -922,6 +942,11 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: операнд не является числом или превышает допустимые значения");
                 }
                 
+                if (sectionNames.FirstOrDefault(name => String.Equals(name, resbLabel, StringComparison.OrdinalIgnoreCase)) != null)
+                {
+                    throw new Exception($"Строка {index + 1}: имя метки занято");
+                }
+
 
                 if (resbLabel != null)
                 {
@@ -989,6 +1014,11 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: операнд не является числом или превышает допустимые значения");
                 }
                 
+                if (sectionNames.FirstOrDefault(name => String.Equals(name, reswLabel, StringComparison.OrdinalIgnoreCase)) != null)
+                {
+                    throw new Exception($"Строка {index + 1}: имя метки занято");
+                }
+
                 if (reswLabel != null)
                 {
                     tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == reswLabel.ToUpper() && n.Section == currentSectionName);
@@ -1020,7 +1050,7 @@ public class FirstPass
             switch (nameFoundInTable.Type)
             {
                 case NameTypes.ExternalReference:
-                    throw new Exception($"строка {index + 1}: метка {label.ToUpper()} уже есть в ТВС");
+                    throw new Exception($"строка {index + 1}: метка {label.ToUpper()} уже есть в ТСИ как ВС");
 
                 case NameTypes.SymbolicName:
                     throw new Exception($"строка {index + 1}: метка {label.ToUpper()} уже есть в ТСИ");
@@ -1028,7 +1058,7 @@ public class FirstPass
                 case NameTypes.ExternalName:
                     if (nameFoundInTable.Address != null)
                     {
-                        throw new Exception($"строка {index + 1}: имени {label.ToUpper()} уже назаначен адрес в ТВИ");
+                        throw new Exception($"строка {index + 1}: имени {label.ToUpper()} уже назаначен адрес");
                     }
 
                     nameFoundInTable.Address = (Converters.ToSixDigits(countAddress.ToString("X")));
@@ -1037,6 +1067,8 @@ public class FirstPass
         }
         else
         {
+
+
             symbolicNames.Add(new SymbolicName()
             {
                 Name = label.ToUpper(),

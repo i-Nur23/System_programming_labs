@@ -41,10 +41,6 @@ partial class Form1
         label5 = new Label();
         label4 = new Label();
         dg_symbolNames = new DataGridView();
-        dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
-        dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
-        Секция = new DataGridViewTextBoxColumn();
-        Тип = new DataGridViewTextBoxColumn();
         TB_firstPassError = new RichTextBox();
         label3 = new Label();
         dg_aux = new DataGridView();
@@ -55,8 +51,6 @@ partial class Form1
         panel3 = new Panel();
         label6 = new Label();
         dg_setting = new DataGridView();
-        dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
-        Метка = new DataGridViewTextBoxColumn();
         label8 = new Label();
         label7 = new Label();
         TB_secondPassError = new RichTextBox();
@@ -65,6 +59,12 @@ partial class Form1
         btn_secondPass = new Button();
         label9 = new Label();
         comboBox1 = new ComboBox();
+        dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
+        dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
+        Тип = new DataGridViewTextBoxColumn();
+        Секция = new DataGridViewTextBoxColumn();
+        dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
+        Метка = new DataGridViewTextBoxColumn();
         panel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).BeginInit();
         panel2.SuspendLayout();
@@ -203,7 +203,7 @@ partial class Form1
         dg_symbolNames.AllowUserToResizeRows = false;
         dg_symbolNames.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
         dg_symbolNames.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dg_symbolNames.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn5, Секция, Тип });
+        dg_symbolNames.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn5, Тип, Секция });
         dg_symbolNames.Location = new Point(5, 463);
         dg_symbolNames.Margin = new Padding(4);
         dg_symbolNames.Name = "dg_symbolNames";
@@ -213,38 +213,6 @@ partial class Form1
         dg_symbolNames.RowTemplate.Height = 29;
         dg_symbolNames.Size = new Size(569, 246);
         dg_symbolNames.TabIndex = 6;
-        // 
-        // dataGridViewTextBoxColumn4
-        // 
-        dataGridViewTextBoxColumn4.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn4.HeaderText = "Имя";
-        dataGridViewTextBoxColumn4.MinimumWidth = 6;
-        dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
-        dataGridViewTextBoxColumn4.ReadOnly = true;
-        // 
-        // dataGridViewTextBoxColumn5
-        // 
-        dataGridViewTextBoxColumn5.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn5.HeaderText = "Адрес";
-        dataGridViewTextBoxColumn5.MinimumWidth = 6;
-        dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
-        dataGridViewTextBoxColumn5.ReadOnly = true;
-        // 
-        // Секция
-        // 
-        Секция.HeaderText = "Секция";
-        Секция.MinimumWidth = 6;
-        Секция.Name = "Секция";
-        Секция.ReadOnly = true;
-        Секция.Width = 125;
-        // 
-        // Тип
-        // 
-        Тип.HeaderText = "Тип";
-        Тип.MinimumWidth = 6;
-        Тип.Name = "Тип";
-        Тип.ReadOnly = true;
-        Тип.Width = 125;
         // 
         // TB_firstPassError
         // 
@@ -363,22 +331,6 @@ partial class Form1
         dg_setting.Size = new Size(311, 203);
         dg_setting.TabIndex = 8;
         // 
-        // dataGridViewTextBoxColumn6
-        // 
-        dataGridViewTextBoxColumn6.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn6.HeaderText = "Адрес";
-        dataGridViewTextBoxColumn6.MinimumWidth = 6;
-        dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
-        dataGridViewTextBoxColumn6.ReadOnly = true;
-        // 
-        // Метка
-        // 
-        Метка.HeaderText = "Метка";
-        Метка.MinimumWidth = 6;
-        Метка.Name = "Метка";
-        Метка.ReadOnly = true;
-        Метка.Width = 125;
-        // 
         // label8
         // 
         label8.AutoSize = true;
@@ -465,6 +417,54 @@ partial class Form1
         comboBox1.TabIndex = 12;
         comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
         // 
+        // dataGridViewTextBoxColumn4
+        // 
+        dataGridViewTextBoxColumn4.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn4.HeaderText = "Имя";
+        dataGridViewTextBoxColumn4.MinimumWidth = 6;
+        dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+        dataGridViewTextBoxColumn4.ReadOnly = true;
+        // 
+        // dataGridViewTextBoxColumn5
+        // 
+        dataGridViewTextBoxColumn5.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn5.HeaderText = "Адрес";
+        dataGridViewTextBoxColumn5.MinimumWidth = 6;
+        dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+        dataGridViewTextBoxColumn5.ReadOnly = true;
+        // 
+        // Тип
+        // 
+        Тип.HeaderText = "Тип";
+        Тип.MinimumWidth = 6;
+        Тип.Name = "Тип";
+        Тип.ReadOnly = true;
+        Тип.Width = 125;
+        // 
+        // Секция
+        // 
+        Секция.HeaderText = "Секция";
+        Секция.MinimumWidth = 6;
+        Секция.Name = "Секция";
+        Секция.ReadOnly = true;
+        Секция.Width = 125;
+        // 
+        // dataGridViewTextBoxColumn6
+        // 
+        dataGridViewTextBoxColumn6.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn6.HeaderText = "Адрес";
+        dataGridViewTextBoxColumn6.MinimumWidth = 6;
+        dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+        dataGridViewTextBoxColumn6.ReadOnly = true;
+        // 
+        // Метка
+        // 
+        Метка.HeaderText = "Секция";
+        Метка.MinimumWidth = 6;
+        Метка.Name = "Метка";
+        Метка.ReadOnly = true;
+        Метка.Width = 125;
+        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(10F, 25F);
@@ -530,10 +530,10 @@ partial class Form1
     private Label label6;
     private Label label9;
     private ComboBox comboBox1;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
-    private DataGridViewTextBoxColumn Метка;
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
-    private DataGridViewTextBoxColumn Секция;
     private DataGridViewTextBoxColumn Тип;
+    private DataGridViewTextBoxColumn Секция;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+    private DataGridViewTextBoxColumn Метка;
 }

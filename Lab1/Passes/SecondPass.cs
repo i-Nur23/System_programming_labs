@@ -71,10 +71,16 @@ public class SecondPass
 
         var defsCount = defs.Count;
 
+        if (defsCount == 0) return 0;
+
+        var defsStringBuilder = new StringBuilder("D ");
+
         foreach (var def in defs)
         {
-            binaryCodeLines.Add($"D {def.Name} {def.Address}");
+            defsStringBuilder.Append($"{def.Name} {def.Address} ");
         }
+
+        binaryCodeLines.Add(defsStringBuilder.ToString());
 
         return defsCount;
     }
@@ -85,10 +91,16 @@ public class SecondPass
 
         var refsCount = refs.Count;
 
+        if (refsCount == 0) return 0;
+
+        var refsStringBuilder = new StringBuilder("R ");
+
         foreach (var reference in refs)
         {
-            binaryCodeLines.Add($"R {reference.Name}");
+            refsStringBuilder.Append($"{reference.Name} ");
         }
+
+        binaryCodeLines.Add(refsStringBuilder.ToString());
 
         return refsCount;
     }
@@ -244,7 +256,7 @@ public class SecondPass
 
         if (symbolicName == null)
         {
-            HandleException($"Ошибка. Имя {operand} не найдено ни в ТСИ, ни в ТВС");
+            HandleException($"Ошибка. Имя {operand} не найдено в ТСИ");
         }
 
         if (symbolicName.Type == NameTypes.ExternalReference)

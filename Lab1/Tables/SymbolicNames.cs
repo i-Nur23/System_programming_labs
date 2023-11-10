@@ -19,7 +19,7 @@ public class SymbolicNames
             name.Type == NameTypes.ExternalName ? "ВИ" : "ВС"
             : "";
 
-        table.Rows.Add(name.Name, name.Address, name.Section, nameType);
+        table.Rows.Add(name.Name, name.Address, nameType, name.Section);
     }
 
     public void Clear()

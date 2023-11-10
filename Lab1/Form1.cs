@@ -113,7 +113,7 @@ public partial class Form1 : Form
         catch (Exception ex)
         {
             TB_firstPassError.Text = ex.Message;
-            TB_firstPassError.AppendText(ex.StackTrace);
+            //TB_firstPassError.AppendText(ex.StackTrace);
         }
 
     }
@@ -142,7 +142,7 @@ public partial class Form1 : Form
         catch (Exception ex)
         {
             TB_secondPassError.Text = ex.Message;
-            TB_secondPassError.AppendText(ex.StackTrace);
+            //TB_secondPassError.AppendText(ex.StackTrace);
         }
     }
 
