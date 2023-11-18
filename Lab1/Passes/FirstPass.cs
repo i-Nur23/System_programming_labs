@@ -942,6 +942,11 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: операнд не является числом или превышает допустимые значения");
                 }
                 
+                if (resbOperand <= 0)
+                {
+                    throw new Exception($"Строка { index + 1 }: нельзя резервировать отрицательное или нулевое количество байт");
+                }
+
                 if (sectionNames.FirstOrDefault(name => String.Equals(name, resbLabel, StringComparison.OrdinalIgnoreCase)) != null)
                 {
                     throw new Exception($"Строка {index + 1}: имя метки занято");
@@ -1014,6 +1019,11 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: операнд не является числом или превышает допустимые значения");
                 }
                 
+                if (reswOperand <= 0)
+                {
+                    throw new Exception($"Строка { index + 1 }: нельзя резервировать отрицательное или нулевое количество байт");
+                }
+
                 if (sectionNames.FirstOrDefault(name => String.Equals(name, reswLabel, StringComparison.OrdinalIgnoreCase)) != null)
                 {
                     throw new Exception($"Строка {index + 1}: имя метки занято");
