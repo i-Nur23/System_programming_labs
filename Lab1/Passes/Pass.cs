@@ -4,18 +4,18 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Lab1.Exceptions;
 using System.Runtime.CompilerServices;
+using Lab1.Singletons;
+using System.ComponentModel;
+using System.Collections;
+using System.Runtime;
+using System.Text;
 
 namespace Lab1.Passes;
 
-public class FirstPass
+public class Pass : IEnumerable<ObjectModuleRecord>
 {
     private SymbolicName tempNameInfo;
-    private string currentSectionName;
-
-    private List<string> sectionNames = new List<string>();
-
-    private List<string> tableOfExtdef = new List<string>();
-    private List<string> tableOfExtref = new List<string>();
+    
 
     private int loadAddress;
     private int countAddress;
@@ -24,49 +24,38 @@ public class FirstPass
     private const int MAX_MEMORY_VOLUME = 16_777_215;
     private const int MAX_BYTE = 255;
     private const int MAX_WORD = 16_777_215;
-    
 
     private readonly List<string> code;
     private readonly List<Operation> operations;
-    private readonly AuxiliaryTable auxiliaryTable;
-    private readonly SymbolicNames symbolicNamesTable;
 
     private bool isStarted = false;
     private bool isEnded = false;
-    private List<SymbolicName> symbolicNames = new List<SymbolicName>();
-    private int currentIndex = 0;
+    private BindingList<SymbolicName> symbolicNames = SymbolicNamesList.GetInstance();
+    private ObjectModuleRecord tempRecord; 
+    private BindingList<ObjectModuleRecord> binaryCodeLines = ObjectModuleList.GetInstance();
 
-    private List<SectionInfo> sections = new List<SectionInfo>();
-    private SectionInfo section = new SectionInfo
-    {
-        AuxiliaryOperations = new List<AuxiliaryOperation>()
-    };
+    private StringBuilder sb = new StringBuilder();
 
-    private Addressing addressing;
 
-    public FirstPass(
+    public Pass(
         List<string> code, 
-        List<Operation> operations, 
-        AuxiliaryTable auxiliaryTable, 
-        SymbolicNames symbolicNamesTable
+        List<Operation> operations
         )
 
     {
         this.code = code;
         this.operations = operations;
-        this.auxiliaryTable = auxiliaryTable;
-        this.symbolicNamesTable = symbolicNamesTable;
-
-        addressing = Addressing.GetAddressing();
     }
 
-    public FirstPassResult Run()
+    public IEnumerator<ObjectModuleRecord> GetEnumerator()
     {
         var linesCount = code.Count;
         string[] splittedLine;
 
-        for (int i = 0; i < linesCount && !isEnded; i++, currentIndex++)
+        for (int i = 0; i < linesCount && !isEnded; i++)
         {
+            tempRecord = new ObjectModuleRecord();
+
             splittedLine = Converters.DeleteExtraWhitespace(code[i])
                 .Trim()
                 .Split(" ",3)
@@ -85,63 +74,48 @@ public class FirstPass
                     break;
             }
 
-            section.AuxiliaryOperations[currentIndex].LineType = line;
-            
             if (countAddress > MAX_MEMORY_VOLUME)
             {
                 throw new Exception("Ошибка. Произошло переполнение памяти");
             }
-        }
 
-        if (!isStarted)
-        {
-            throw new Exception("Ошибка. В программе должна присутствовать директива START");
+            if (i == linesCount - 1 && !isEnded)
+            {
+                CheckIfEnded();
+            }
+
+            sb.Clear();
+
+            yield return tempRecord;
         }
-        
+    }
+
+    public void CheckSymbolicNames()
+    {
+        var nameWithoutAddress = symbolicNames.FirstOrDefault(name => name.OperandAddress != null);
+
+        if (nameWithoutAddress != null)
+        {
+            throw new Exception($"Ошибка. Имени {nameWithoutAddress.Name} не назначен адрес");
+        }
+    }
+
+    public void CheckIfEnded()
+    {
         if (!isEnded)
         {
             throw new Exception("Ошибка. В программе должна присутствовать директива END");
         }
-
-        var undefinedExternalNamesCount = symbolicNames
-            .Count(n => n.Type == NameTypes.ExternalName && String.IsNullOrEmpty(n.Address));
-
-        if (undefinedExternalNamesCount > 0)
-        {
-            throw new Exception("Ошибка. Имеются неопределенные внешние имена");
-        }
-
-        for (int i = 0; i < sections.Count; i++)
-        {
-            var section = sections[i];
-
-            for (int j = 0; j < section.AuxiliaryOperations.Count; j++)
-            {
-                var op = section.AuxiliaryOperations[j];
-
-                if (i != sections.Count - 1 && j == section.AuxiliaryOperations.Count - 1)
-                    break;
-
-                auxiliaryTable.Add(op);
-            }
-        }
-
-        foreach (var name in symbolicNames)
-        {
-            symbolicNamesTable.Add(name);
-        }
-
-
-
-        return new FirstPassResult
-        {
-            SectionInfos = sections
-        };
     }
 
     // Обработка команд
     private void HandleCommand(string[] line, int index, string commandName)
     {
+        if (!isStarted)
+        {
+            throw new Exception("Ошибка. В программе должна присутствовать директива START");
+        }
+
         var operation = operations.FirstOrDefault(op => op.MnemonicCode == commandName.ToUpper());
 
         if (operation == null)
@@ -173,7 +147,7 @@ public class FirstPass
         if (lineElementsCount > 4)
         {
             throw new Exception($"Строка {index + 1}: более 4-x частей быть не может!");
-        } 
+        }
 
         if (line[0].ToUpper() != commandName)
         {
@@ -188,13 +162,8 @@ public class FirstPass
             {
                 throw new Exception($"Строка {index + 1}: метка не может быть регистром");
             }
-            
-            if (sectionNames.FirstOrDefault(name => String.Equals(name, line[0], StringComparison.OrdinalIgnoreCase)) != null)
-            {
-                throw new Exception($"Строка {index + 1}: имя метки занято");
-            }
 
-            tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper() && n.Section == currentSectionName);
+            tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper());
 
             ProcessLabel(tempNameInfo, index, line[0]);
             
@@ -202,57 +171,32 @@ public class FirstPass
             {
                 binaryCode = operation.BinaryCode * 4;
             }
-            else if (Checks.IsRightRelativeAddressing(line[2]))
-            {
-                if (addressing.AddressType == AddressingType.DIRECT)
-                {
-                    throw new WrongAddressException(index + 1);
-                }    
-                
-                binaryCode = operation.BinaryCode * 4 + 2;
-            }
             else
             {
-                if (!Checks.IsRightLabel(line[2]))
-                {
-                    throw new Exception($"Строка {index + 1}: неверный формат операнда");
-                }
-                
-                if (addressing.AddressType == AddressingType.RELATIVE)
-                {
-                    if (symbolicNames.FirstOrDefault(n => n.Name == line[2]
-                            && n.Type == NameTypes.ExternalReference
-                            && n.Section == currentSectionName)
-                        == null)
-                    {
-                        throw new WrongAddressException(index + 1);
-                    }
-                }
-                
                 binaryCode = operation.BinaryCode * 4 + 1;
+
+
+                switch (line.Length)
+                {
+                    case 4:
+                        ProcessLabelOperand(line[2], index);
+                        ProcessLabelOperand(line[3], index);
+                        break;
+                    case 3:
+                        ProcessLabelOperand(line[2], index);
+                        break;
+                    default:
+                        break;
+                }
             }
 
             if (lineElementsCount == 4)
             {
                 if (!Checks.IsDirectAddressing(line[3]))
                 {
-                    if (Checks.IsRightRelativeAddressing(line[3]) && addressing.AddressType == AddressingType.DIRECT)
-                    {
-                        throw new WrongAddressException(index + 1);    
-                    }
                     if (!Checks.IsRightLabel(line[3]))
                     {
                         throw new Exception($"Строка {index + 1}: неверный формат операнда");
-                    }
-                    if (addressing.AddressType == AddressingType.RELATIVE)
-                    {
-                        if (symbolicNames.FirstOrDefault(n => n.Name == line[3]
-                                && n.Type == NameTypes.ExternalReference
-                                && n.Section == currentSectionName)
-                            == null)
-                        {
-                            throw new WrongAddressException(index + 1);
-                        }
                     }
                 }    
             }
@@ -268,15 +212,6 @@ public class FirstPass
             {
                 binaryCode = operation.BinaryCode * 4;
             }
-            else if (Checks.IsRightRelativeAddressing(line[1]))
-            {
-                if (addressing.AddressType == AddressingType.DIRECT)
-                {
-                    throw new WrongAddressException(index + 1);
-                }
-                
-                binaryCode = operation.BinaryCode * 4 + 2;
-            }
             else
             {
                 if (!Checks.IsRightLabel(line[1]))
@@ -284,52 +219,37 @@ public class FirstPass
                     throw new Exception($"Строка {index + 1}: неверный формат операнда");
                 }
                 
-                if (addressing.AddressType == AddressingType.RELATIVE)
-                {
-                    if (symbolicNames.FirstOrDefault(n => n.Name == line[1]
-                            && n.Type == NameTypes.ExternalReference
-                            && n.Section == currentSectionName)
-                        == null)
-                    {
-                        throw new WrongAddressException(index + 1);
-                    }
-                }
-                
                 binaryCode = operation.BinaryCode * 4 + 1;
+
+                switch (line.Length)
+                {
+                    case 3:
+                        ProcessLabelOperand(line[1], index);
+                        ProcessLabelOperand(line[2], index);
+                        break;
+                    case 2:
+                        ProcessLabelOperand(line[1], index);
+                        break;
+                    default:
+                        break;
+                }
             }
             
             if (lineElementsCount == 3)
             {
                 if (!Checks.IsDirectAddressing(line[2]))
                 {
-                    if (Checks.IsRightRelativeAddressing(line[2]) && addressing.AddressType == AddressingType.DIRECT)
-                    {
-                        throw new WrongAddressException(index + 1);    
-                    } if (!Checks.IsRightLabel(line[2]))
+                    if (!Checks.IsRightLabel(line[2]))
                     {
                         throw new Exception($"Строка {index + 1}: неверный формат операнда");
-                    }
-                    if (addressing.AddressType == AddressingType.RELATIVE)
-                    {
-                        if (symbolicNames.FirstOrDefault(n => n.Name == line[2]
-                                && n.Type == NameTypes.ExternalReference
-                                && n.Section == currentSectionName)
-                            == null)
-                        {
-                            throw new WrongAddressException(index + 1);
-                        }
                     }
                 }    
             }
         }
 
-        var auxOperation = new AuxiliaryOperation
-        {
-            Address = Converters.ToSixDigits(countAddress.ToString("X")),
-            BinaryCode = Converters.ToTwoDigits(binaryCode.ToString("X"))
-        };
+        sb.Append(Converters.ToTwoDigits(binaryCode.ToString("X")));
 
-        if (line[0] != commandName)
+        if (!String.Equals(line[0], commandName, StringComparison.OrdinalIgnoreCase))
         {
             if (lineElementsCount > 2)
             {
@@ -353,8 +273,9 @@ public class FirstPass
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
-                
-                auxOperation.FirstOperand = line[2];
+
+                sb.Append(ProcessOperand(line[2], commandName, index));
+
             }
 
             if (lineElementsCount == 4)
@@ -374,8 +295,8 @@ public class FirstPass
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
-                
-                auxOperation.SecondOperand = line[3];
+
+                sb.Append(ProcessOperand(line[3], commandName, index));
             }
         }
         else
@@ -407,8 +328,8 @@ public class FirstPass
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
-                
-                auxOperation.FirstOperand = line[1];
+
+                sb.Append(ProcessOperand(line[1], commandName, index));
             }
 
             if (lineElementsCount == 3)
@@ -428,14 +349,22 @@ public class FirstPass
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
-                
-                auxOperation.SecondOperand = line[2];
+
+                sb.Append(ProcessOperand(line[2], commandName, index));
             }
         }
-        
-        section.AuxiliaryOperations.Add(auxOperation);
 
-        countAddress += operation.CommandLength;
+        tempRecord.Type = RecordType.T;
+        tempRecord.Address = Converters.ToSixDigits(countAddress.ToString("X"));
+        tempRecord.Length = Converters.ToTwoDigits((operation.CommandLength * 2).ToString("X"));
+        tempRecord.OperandPart = sb.ToString();
+
+
+        checked
+        {
+            countAddress += operation.CommandLength;
+        }
+        
         if (countAddress > MAX_MEMORY_VOLUME)
         {
             throw new Exception("Ошибка. Произошло переполнение памяти");
@@ -446,6 +375,11 @@ public class FirstPass
     // Обработка директив
     private void HandleDirective(string[] line, int index, string dirName) 
     {
+        if (dirName != "START" && !isStarted)
+        {
+            throw new Exception("Ошибка. В программе должна присутствовать директива START");
+        }
+
         if (line[0].ToUpper() != dirName && line[1].ToUpper() != dirName)
         {
             throw new Exception($"Строка {index + 1}: в строке не может более одной метки");
@@ -465,25 +399,26 @@ public class FirstPass
                     throw new Exception("Директива START должна встречаться один раз и в начале программы");
                 }
 
-                loadAddress = 0;
-
-                section.LoadAddress = 0;
-
                 isStarted = true;
 
-                if (line.Length == 3) {
-                    var isAddressOk = Int32.TryParse(
+                var isAddressOk = Int32.TryParse(
                         line[2],
                         NumberStyles.HexNumber,
                         CultureInfo.CurrentCulture,
                         out int addressInCommand
                     );
 
-                    if (!isAddressOk || addressInCommand != 0)
-                    {
-                        throw new Exception("В адресе загрузки должен быть 0");
-                    }
+                if (!isAddressOk)
+                {
+                    throw new Exception("В адресе загрузки не число или число превышающее память");
                 }
+
+                if (addressInCommand == 0)
+                {
+                    throw new Exception("В адресе загрузки не должно быть 0");
+                }
+
+                loadAddress = addressInCommand;
 
                 if (line[0].Length > 6)
                 {
@@ -512,20 +447,14 @@ public class FirstPass
                     throw new Exception("Имя программы не может быть регистром");
                 }
 
-                currentSectionName = line[0];
-                section.Name = line[0];
-
-                sectionNames.Add(line[1].ToUpper());
-
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation
-                {
-                    Address = line[0],
-                    BinaryCode = line[1],
-                    FirstOperand =  line.Length == 3 ? "000000" : null,
-                });
+                tempRecord.Type = RecordType.H;
+                tempRecord.Address = line[0];
+                tempRecord.Length = Converters.ToSixDigits(line[2]);
                 
                 break;
             case "END":
+                CheckSymbolicNames();
+
                 if (line.Length > 2)
                 {
                     throw new Exception($"Строка { index + 1 }: в строке с директивой END должно быть 1 или 2 элемента");
@@ -541,24 +470,21 @@ public class FirstPass
                 if (line.Length == 1)
                 {
                     endAddress = loadAddress;
-                    section.AuxiliaryOperations.Add(new AuxiliaryOperation
-                    {
-                        Address = Converters.ToSixDigits(countAddress.ToString("X")), 
-                        BinaryCode = "END"
-                    });
-                    break;
                 }
 
-                var isEndAddressOk = Int32.TryParse(
+                if (line.Length > 1)
+                {
+                    var isEndAddressOk = Int32.TryParse(
                     line[1],
                     NumberStyles.HexNumber,
                     CultureInfo.CurrentCulture,
                     out endAddress
-                );
+                    );
 
-                if (!isEndAddressOk)
-                {
-                    throw new Exception("В адресе входа в программу указано не число");
+                    if (!isEndAddressOk)
+                    {
+                        throw new Exception("В адресе входа в программу указано не число");
+                    }
                 }
 
                 if (endAddress < loadAddress || endAddress > countAddress)
@@ -566,155 +492,10 @@ public class FirstPass
                     throw new Exception("Неверный адрес входа в программу");
                 }
 
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
-                    BinaryCode = "END", 
-                    FirstOperand = line[1] 
-                });
+                tempRecord.Type = RecordType.E;
+                tempRecord.Address =  Converters.ToSixDigits(endAddress.ToString("X"));
 
-                section.Length = countAddress;
-                section.SymbolicNames = symbolicNames.Where(n => n.Section == currentSectionName).ToList();
-                sections.Add(section);
-
-                break;
-            case "EXTDEF":
-                var lastAddedOperationBeforeExtdef = section.AuxiliaryOperations.Last();
-
-                if (lastAddedOperationBeforeExtdef.BinaryCode.ToUpper() != "START" &&
-                    lastAddedOperationBeforeExtdef.BinaryCode.ToUpper() != "CSEC" &&
-                    lastAddedOperationBeforeExtdef.BinaryCode.ToUpper() != "EXTDEF" )
-                {
-                    throw new Exception($"Строка { index + 1 }: неверная позиция EXTDEF");
-                }
-
-
-                if (line.Length != 2 ||
-                    !String.Equals(line[0].ToUpper(), "EXTDEF") ||
-                    !Checks.IsRightLabel(line[1]))
-                {
-                    throw new Exception($"Строка { index + 1 }: неверный формат директивы EXTDEF");
-                }
-
-                var exportName = line[1];
-
-                if (tableOfExtdef.IndexOf(exportName.ToUpper()) != -1 || tableOfExtdef.IndexOf(exportName) != -1)
-                {
-                    throw new Exception($"Строка { index + 1 }: имя не уникально для EXTDEF");
-                }
-
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation
-                {
-                    BinaryCode = "EXTDEF",
-                    FirstOperand = exportName,
-                    LineType = Line.DIRECTIVE
-                });
-
-                symbolicNames.Add(new SymbolicName
-                {
-                    Name = exportName,
-                    Section = currentSectionName,
-                    Type = NameTypes.ExternalName
-                });
-
-                tableOfExtdef.Add(exportName.ToUpper());
-
-
-                break;
-            case "EXTREF":
-                var lastAddedOperationBeforeExtref = section.AuxiliaryOperations.Last();
-
-                if (lastAddedOperationBeforeExtref.BinaryCode.ToUpper() != "START" &&
-                    lastAddedOperationBeforeExtref.BinaryCode.ToUpper() != "CSEC" &&
-                    lastAddedOperationBeforeExtref.BinaryCode.ToUpper() != "EXTDEF" &&
-                    lastAddedOperationBeforeExtref.BinaryCode.ToUpper() != "EXTREF")
-                {
-                    throw new Exception($"Строка { index + 1 }: неверная позиция EXTREF");
-                }
-
-
-                if (line.Length != 2 ||
-                    !String.Equals(line[0].ToUpper(), "EXTREF") ||
-                    !Checks.IsRightLabel(line[1]))
-                {
-                    throw new Exception($"Строка { index + 1 }: неверный формат директивы EXTREF");
-                }
-
-                var importName = line[1];
-
-                if (tableOfExtdef.IndexOf(importName.ToUpper()) != -1 || tableOfExtdef.IndexOf(importName) != -1)
-                {
-                    throw new Exception($"Строка { index + 1 }: имя не уникально для EXTREF");
-                }
-
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation
-                {
-                    BinaryCode = "EXTREF",
-                    FirstOperand = importName,
-                    LineType = Line.DIRECTIVE
-                });
-
-                symbolicNames.Add(new SymbolicName
-                {
-                    Name = importName,
-                    Section = currentSectionName,
-                    Type = NameTypes.ExternalReference
-                });
-
-                tableOfExtref.Add(importName);
-
-                break;
-            case "CSEC":
-
-                if (line.Length != 2 || String.Equals(line[0].ToUpper(), "CSEC"))
-                {
-                    throw new Exception($"Строка { index + 1 }: неверный формат директивы CSEC");
-                }
-
-                if (!Checks.IsRightLabel(line[0]))
-                {
-                    throw new Exception($"Строка { index + 1 }: неверный формат метки в директиве CSEC");
-                }
-
-                if (symbolicNames.FirstOrDefault(n => n.Name == line[0]) != null ||
-                    sectionNames.IndexOf(line[0].ToUpper()) != -1)
-                {
-                    throw new Exception($"Строка { index + 1 }: имя { line[0] } уже использовано ранее ");
-                }
-
-                section.Length = countAddress;
-                section.SymbolicNames = symbolicNames.Where(n => n.Section == currentSectionName).ToList();
-
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation
-                {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X")),
-                    BinaryCode = "END",
-                    FirstOperand = "000000",
-                });
-
-                sections.Add(section);
-                section = new SectionInfo
-                {
-                    AuxiliaryOperations = new List<AuxiliaryOperation>(),
-                    LoadAddress = 0
-                };
-
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation
-                {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X")),
-                    BinaryCode = "CSEC",
-                    FirstOperand = line[0],
-                });
-
-                sectionNames.Add(line[0].ToUpper());
-
-                countAddress = 0;
-                currentIndex = 0;
-
-                currentSectionName = line[0];
-                section.Name = currentSectionName;
-
-                tableOfExtdef.Clear();
-                tableOfExtref.Clear();
+                binaryCodeLines.First().OperandPart = Converters.ToSixDigits((countAddress - loadAddress).ToString("X"));
 
                 break;
             case "BYTE":
@@ -794,30 +575,27 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: отрицательный или превышающий максимальное значение операнд");
                 }
 
-                if (sectionNames.FirstOrDefault(name => String.Equals(name, byteLabel, StringComparison.OrdinalIgnoreCase)) != null)
-                {
-                    throw new Exception($"Строка {index + 1}: имя метки занято");
-                }
-
                 if (byteLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == byteLabel.ToUpper() && n.Section == currentSectionName);
-
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, byteLabel, StringComparison.OrdinalIgnoreCase));
                     ProcessLabel(tempNameInfo, index, byteLabel);
                 }
-                
-                
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
-                    BinaryCode = "BYTE", 
-                    FirstOperand = byteStringOperand
-                });
 
-                countAddress += addingToAddress;
+                tempRecord.Type = RecordType.T;
+                tempRecord.Address = Converters.ToSixDigits(countAddress.ToString("X"));
+                tempRecord.Length = Converters.ToTwoDigits((addingToAddress * 2).ToString("X"));
+                tempRecord.OperandPart = ProcessOperand(byteStringOperand, "BYTE", index);
+
+                checked
+                {
+                    countAddress += addingToAddress;
+                }
+                
                 if (countAddress > MAX_MEMORY_VOLUME)
                 {
                     throw new Exception("Ошибка. Произошло переполнение памяти");
                 }
+
 
                 break;
             case "WORD":
@@ -870,25 +648,23 @@ public class FirstPass
                 {
                     throw new Exception($"Строка { index + 1 }: отрицательный или превышающий максимальное значение операнд");
                 }
-                
-                if (sectionNames.FirstOrDefault(name => String.Equals(name, wordLabel, StringComparison.OrdinalIgnoreCase)) != null)
-                {
-                    throw new Exception($"Строка {index + 1}: имя метки занято");
-                }
 
                 if (wordLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == wordLabel.ToUpper() && n.Section == currentSectionName);
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, wordLabel, StringComparison.OrdinalIgnoreCase));
                     ProcessLabel(tempNameInfo, index, wordLabel);
                 }
-                
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
-                    BinaryCode = "WORD", 
-                    FirstOperand = wordStringOperand
-                });
 
-                countAddress += 3;
+                tempRecord.Type = RecordType.T;
+                tempRecord.Address = Converters.ToSixDigits(countAddress.ToString("X"));
+                tempRecord.Length = Converters.ToTwoDigits(6.ToString("X"));
+                tempRecord.OperandPart = ProcessOperand(wordStringOperand, "WORD", index);
+
+                checked
+                {
+                    countAddress += 3;
+                }
+
                 if (countAddress > MAX_MEMORY_VOLUME)
                 {
                     throw new Exception("Ошибка. Произошло переполнение памяти");
@@ -947,26 +723,24 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: нельзя резервировать отрицательное или нулевое количество байт");
                 }
 
-                if (sectionNames.FirstOrDefault(name => String.Equals(name, resbLabel, StringComparison.OrdinalIgnoreCase)) != null)
-                {
-                    throw new Exception($"Строка {index + 1}: имя метки занято");
-                }
 
+                tempRecord.Type = RecordType.T;
+                tempRecord.Address = Converters.ToSixDigits(countAddress.ToString("X"));
+                tempRecord.Length = Converters.ToTwoDigits((resbOperand * 2).ToString("X"));
 
                 if (resbLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == resbLabel.ToUpper() && n.Section == currentSectionName);
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, resbLabel, StringComparison.OrdinalIgnoreCase));
 
                     ProcessLabel(tempNameInfo, index, resbLabel);
                 }
-                
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
-                    BinaryCode = "RESB", 
-                    FirstOperand = resbStringOperand
-                });
 
-                countAddress += resbOperand;
+
+                checked
+                {
+                    countAddress += resbOperand;
+                }
+               
                 if (countAddress > MAX_MEMORY_VOLUME)
                 {
                     throw new Exception("Ошибка. Произошло переполнение памяти");
@@ -1024,25 +798,22 @@ public class FirstPass
                     throw new Exception($"Строка { index + 1 }: нельзя резервировать отрицательное или нулевое количество байт");
                 }
 
-                if (sectionNames.FirstOrDefault(name => String.Equals(name, reswLabel, StringComparison.OrdinalIgnoreCase)) != null)
-                {
-                    throw new Exception($"Строка {index + 1}: имя метки занято");
-                }
-
                 if (reswLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == reswLabel.ToUpper() && n.Section == currentSectionName);
-
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, reswLabel, StringComparison.OrdinalIgnoreCase));
                     ProcessLabel(tempNameInfo, index, reswLabel);
                 }
-                
-                section.AuxiliaryOperations.Add(new AuxiliaryOperation {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X")), 
-                    BinaryCode = "RESW", 
-                    FirstOperand = reswStringOperand
-                });
 
-                countAddress += reswOperand * 3;
+                tempRecord.Type = RecordType.T;
+                tempRecord.Address = Converters.ToSixDigits(countAddress.ToString("X"));
+                tempRecord.Length = Converters.ToTwoDigits((reswOperand * 6).ToString("X"));
+
+                checked
+                {
+                    countAddress += reswOperand * 3;
+                }
+
+               
                 if (countAddress > MAX_MEMORY_VOLUME)
                 {
                     throw new Exception("Ошибка. Произошло переполнение памяти");
@@ -1055,37 +826,150 @@ public class FirstPass
 
     private void ProcessLabel(SymbolicName nameFoundInTable, int index, string label)
     {
-        if (nameFoundInTable != null)
+        if (nameFoundInTable == null)
         {
-            switch (nameFoundInTable.Type)
-            {
-                case NameTypes.ExternalReference:
-                    throw new Exception($"строка {index + 1}: метка {label.ToUpper()} уже есть в ТСИ как ВС");
-
-                case NameTypes.SymbolicName:
-                    throw new Exception($"строка {index + 1}: метка {label.ToUpper()} уже есть в ТСИ");
-
-                case NameTypes.ExternalName:
-                    if (nameFoundInTable.Address != null)
-                    {
-                        throw new Exception($"строка {index + 1}: имени {label.ToUpper()} уже назаначен адрес");
-                    }
-
-                    nameFoundInTable.Address = (Converters.ToSixDigits(countAddress.ToString("X")));
-                    break;
-            }
-        }
-        else
-        {
-
-
             symbolicNames.Add(new SymbolicName()
             {
                 Name = label.ToUpper(),
-                Address = Converters.ToSixDigits(countAddress.ToString("X")),
-                Section = currentSectionName
+                Address = Converters.ToSixDigits(countAddress.ToString("X"))
             });
+
+            return;
         }
 
+
+        if (nameFoundInTable.Address != null)
+        {
+            throw new Exception($"строка {index + 1}: имени {label.ToUpper()} уже назаначен адрес");
+        }
+
+        var indexOfName = symbolicNames.IndexOf(nameFoundInTable);
+        var countOfName = symbolicNames.Count(n => String.Equals(n.Name, nameFoundInTable.Name));
+
+        var substringTemplate = $"${label}$";
+
+        foreach (var line in binaryCodeLines)
+        {
+            if (line.OperandPart != null && line.OperandPart.Contains(substringTemplate, StringComparison.OrdinalIgnoreCase))
+            {
+                line.OperandPart = line.OperandPart.Replace(substringTemplate, Converters.ToSixDigits(countAddress.ToString("X")), StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        for (int j = 0; j < countOfName; j++)
+        {
+            symbolicNames
+                .Remove(symbolicNames.FirstOrDefault(n => String.Equals(n.Name, nameFoundInTable.Name, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        symbolicNames.Insert(indexOfName, new SymbolicName()
+        {
+            Name = label.ToUpper(),
+            Address = Converters.ToSixDigits(countAddress.ToString("X"))
+        });
+
+    }
+
+    private void ProcessLabelOperand(string name, int index)
+    {
+        int symbolicNameIndex;
+
+        if (symbolicNames.Count == 0)
+        {
+            symbolicNameIndex = 0;
+
+            symbolicNames.Insert(symbolicNameIndex, new SymbolicName()
+            {
+                Name = name.ToUpper(),
+                OperandAddress = Converters.ToSixDigits(countAddress.ToString("X"))
+            });
+
+            return;
+        }
+
+        var names = symbolicNames
+            .Where(sn => String.Equals(sn.Name, name, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (names.Count != 0 && names[0].Address != null)
+        {
+            return;
+        }
+
+        if (names.Count == 0)
+        {
+            symbolicNameIndex = symbolicNames.Count - 1;
+        }
+        else
+        {
+            symbolicNameIndex = symbolicNames.IndexOf(names.Last());
+        }
+
+        symbolicNames.Insert(symbolicNameIndex, new SymbolicName()
+        {
+            Name = name.ToUpper(),
+            OperandAddress = Converters.ToSixDigits(countAddress.ToString("X"))
+        }); 
+
+    }
+
+    private string ProcessOperand(string operand, string operation, int index)
+    {
+        if (operand == null) return "";
+
+        if (Checks.IsNumber(operand))
+        {
+            var hexNumber = Int32.Parse(operand);
+            switch (operation)
+            {
+                case "BYTE":
+                    return Converters.ToTwoDigits(hexNumber.ToString("X"));
+                case "WORD":
+                    return Converters.ToSixDigits(hexNumber.ToString("X"));
+                default:
+                    return Converters.ToSixDigits(hexNumber.ToString("X"));
+            }
+        }
+
+        if (Checks.IsByteArray(operand))
+        {
+            return operand.Substring(2, operand.Length - 3).ToUpper();
+        }
+
+        if (Checks.IsCharString(operand))
+        {
+            var charsStringBuilder = new StringBuilder();
+            var chars = Encoding.ASCII.GetBytes(operand.Substring(2, operand.Length - 3));
+
+            foreach (var character in chars)
+            {
+                charsStringBuilder.Append(Converters.ToTwoDigits(character.ToString("X")));
+            }
+
+            return charsStringBuilder.ToString();
+        }
+
+        if (Checks.IsRegister(operand))
+        {
+            return Int32.Parse(operand.Substring(1)).ToString("X");
+        }
+
+        SymbolicName symbolicName;
+
+        symbolicName = symbolicNames
+            .FirstOrDefault(n => String.Equals(n.Name, operand, StringComparison.OrdinalIgnoreCase));
+
+        if (symbolicName == null || symbolicName.Address == null )
+        {
+            return $"${operand}$";    
+        }
+
+        return symbolicName.Address;
+
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        throw new NotImplementedException();
     }
 }

@@ -8,7 +8,7 @@ public class SectionInfo {
     
     public int Length { get; set; }
     
-    public List<AuxiliaryOperation> AuxiliaryOperations { get; set; }
+    //public List<AuxiliaryOperation> AuxiliaryOperations { get; set; }
     
     public List<SymbolicName> SymbolicNames { get; set; }
     

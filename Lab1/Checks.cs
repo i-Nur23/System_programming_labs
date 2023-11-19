@@ -3,6 +3,12 @@ using System.Text.RegularExpressions;
 
 namespace Lab1;
 
+public enum Line
+{
+    COMMAND,
+    DIRECTIVE
+}
+
 public static class Checks
 {
     private static List<string> directives = new List<string> { "START", "END", "BYTE", "WORD", "RESB", "RESW", "CSEC", "EXTDEF", "EXTREF" };

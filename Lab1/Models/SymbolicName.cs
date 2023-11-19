@@ -13,7 +13,5 @@ public class SymbolicName
     
     public string Address { get; set; }
 
-    public string Section { get; set; }
-
-    public NameTypes Type { get; set; }
+    public string OperandAddress { get; set; }
 }

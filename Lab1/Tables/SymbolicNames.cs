@@ -1,4 +1,9 @@
 ﻿using Lab1.Models;
+using Lab1.Singletons;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System;
+using System.Linq;
 
 namespace Lab1.Tables;
 
@@ -11,15 +16,10 @@ public class SymbolicNames
     public SymbolicNames(DataGridView table)
     {
         this.table = table;
-    }
 
-    public void Add(SymbolicName name)
-    {
-        var nameType = name.Type != NameTypes.SymbolicName ?
-            name.Type == NameTypes.ExternalName ? "ВИ" : "ВС"
-            : "";
-
-        table.Rows.Add(name.Name, name.Address, nameType, name.Section);
+        var bindingList = SymbolicNamesList.GetInstance();
+        var source = new BindingSource(bindingList, null);
+        table.DataSource = source;
     }
 
     public void Clear()
