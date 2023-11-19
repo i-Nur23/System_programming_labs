@@ -6,6 +6,7 @@ namespace Lab1.Models
     {
         H,
         T,
+        M,
         E
     }
 

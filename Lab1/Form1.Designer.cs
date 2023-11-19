@@ -38,6 +38,9 @@ partial class Form1
         label1 = new Label();
         tb_initCode = new RichTextBox();
         panel2 = new Panel();
+        dg_settings = new DataGridView();
+        dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+        label6 = new Label();
         label5 = new Label();
         label4 = new Label();
         dg_symbolNames = new DataGridView();
@@ -47,17 +50,20 @@ partial class Form1
         TB_firstPassError = new RichTextBox();
         panel3 = new Panel();
         dg_objectModule = new DataGridView();
-        label8 = new Label();
-        btn_start = new Button();
-        btn_doStep = new Button();
-        btn_reset = new Button();
         Type = new DataGridViewTextBoxColumn();
         Address = new DataGridViewTextBoxColumn();
         Length = new DataGridViewTextBoxColumn();
         OperandPart = new DataGridViewTextBoxColumn();
+        label8 = new Label();
+        btn_start = new Button();
+        btn_doStep = new Button();
+        btn_reset = new Button();
+        comboBox1 = new ComboBox();
+        label3 = new Label();
         panel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).BeginInit();
         panel2.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dg_settings).BeginInit();
         ((System.ComponentModel.ISupportInitialize)dg_symbolNames).BeginInit();
         panel3.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_objectModule).BeginInit();
@@ -152,6 +158,8 @@ partial class Form1
         // 
         panel2.BackColor = SystemColors.ControlLight;
         panel2.BorderStyle = BorderStyle.Fixed3D;
+        panel2.Controls.Add(dg_settings);
+        panel2.Controls.Add(label6);
         panel2.Controls.Add(label5);
         panel2.Controls.Add(label4);
         panel2.Controls.Add(dg_symbolNames);
@@ -161,6 +169,44 @@ partial class Form1
         panel2.Name = "panel2";
         panel2.Size = new Size(583, 908);
         panel2.TabIndex = 1;
+        // 
+        // dg_settings
+        // 
+        dg_settings.AllowUserToAddRows = false;
+        dg_settings.AllowUserToDeleteRows = false;
+        dg_settings.AllowUserToResizeColumns = false;
+        dg_settings.AllowUserToResizeRows = false;
+        dg_settings.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
+        dg_settings.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        dg_settings.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1 });
+        dg_settings.Location = new Point(6, 446);
+        dg_settings.Margin = new Padding(4);
+        dg_settings.Name = "dg_settings";
+        dg_settings.ReadOnly = true;
+        dg_settings.RowHeadersVisible = false;
+        dg_settings.RowHeadersWidth = 51;
+        dg_settings.RowTemplate.Height = 29;
+        dg_settings.Size = new Size(569, 270);
+        dg_settings.TabIndex = 10;
+        // 
+        // dataGridViewTextBoxColumn1
+        // 
+        dataGridViewTextBoxColumn1.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn1.DataPropertyName = "Address";
+        dataGridViewTextBoxColumn1.HeaderText = "Адрес";
+        dataGridViewTextBoxColumn1.MinimumWidth = 6;
+        dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+        dataGridViewTextBoxColumn1.ReadOnly = true;
+        // 
+        // label6
+        // 
+        label6.AutoSize = true;
+        label6.Location = new Point(196, 417);
+        label6.Margin = new Padding(4, 0, 4, 0);
+        label6.Name = "label6";
+        label6.Size = new Size(199, 25);
+        label6.TabIndex = 9;
+        label6.Text = "Таблица модификаций";
         // 
         // label5
         // 
@@ -198,7 +244,7 @@ partial class Form1
         dg_symbolNames.RowHeadersVisible = false;
         dg_symbolNames.RowHeadersWidth = 51;
         dg_symbolNames.RowTemplate.Height = 29;
-        dg_symbolNames.Size = new Size(569, 673);
+        dg_symbolNames.Size = new Size(569, 368);
         dg_symbolNames.TabIndex = 6;
         // 
         // dataGridViewTextBoxColumn4
@@ -270,6 +316,42 @@ partial class Form1
         dg_objectModule.Size = new Size(569, 859);
         dg_objectModule.TabIndex = 8;
         // 
+        // Type
+        // 
+        Type.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        Type.DataPropertyName = "Type";
+        Type.HeaderText = "Type";
+        Type.MinimumWidth = 6;
+        Type.Name = "Type";
+        Type.ReadOnly = true;
+        // 
+        // Address
+        // 
+        Address.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        Address.DataPropertyName = "Address";
+        Address.HeaderText = "Address";
+        Address.MinimumWidth = 6;
+        Address.Name = "Address";
+        Address.ReadOnly = true;
+        // 
+        // Length
+        // 
+        Length.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        Length.DataPropertyName = "Length";
+        Length.HeaderText = "Length";
+        Length.MinimumWidth = 6;
+        Length.Name = "Length";
+        Length.ReadOnly = true;
+        // 
+        // OperandPart
+        // 
+        OperandPart.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        OperandPart.DataPropertyName = "OperandPart";
+        OperandPart.HeaderText = "OperandPart";
+        OperandPart.MinimumWidth = 6;
+        OperandPart.Name = "OperandPart";
+        OperandPart.ReadOnly = true;
+        // 
         // label8
         // 
         label8.AutoSize = true;
@@ -310,41 +392,24 @@ partial class Form1
         btn_reset.UseVisualStyleBackColor = true;
         btn_reset.Click += btn_reset_Click;
         // 
-        // Type
+        // comboBox1
         // 
-        Type.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        Type.DataPropertyName = "Type";
-        Type.HeaderText = "Type";
-        Type.MinimumWidth = 6;
-        Type.Name = "Type";
-        Type.ReadOnly = true;
+        comboBox1.FormattingEnabled = true;
+        comboBox1.Items.AddRange(new object[] { "Только прямая адресация", "Только относительная адресация", "Смешанная адресация" });
+        comboBox1.Location = new Point(1269, 924);
+        comboBox1.Name = "comboBox1";
+        comboBox1.Size = new Size(502, 33);
+        comboBox1.TabIndex = 6;
+        comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
         // 
-        // Address
+        // label3
         // 
-        Address.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        Address.DataPropertyName = "Address";
-        Address.HeaderText = "Address";
-        Address.MinimumWidth = 6;
-        Address.Name = "Address";
-        Address.ReadOnly = true;
-        // 
-        // Length
-        // 
-        Length.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        Length.DataPropertyName = "Length";
-        Length.HeaderText = "Length";
-        Length.MinimumWidth = 6;
-        Length.Name = "Length";
-        Length.ReadOnly = true;
-        // 
-        // OperandPart
-        // 
-        OperandPart.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        OperandPart.DataPropertyName = "OperandPart";
-        OperandPart.HeaderText = "OperandPart";
-        OperandPart.MinimumWidth = 6;
-        OperandPart.Name = "OperandPart";
-        OperandPart.ReadOnly = true;
+        label3.AutoSize = true;
+        label3.Location = new Point(1188, 927);
+        label3.Name = "label3";
+        label3.Size = new Size(79, 25);
+        label3.TabIndex = 7;
+        label3.Text = "Пример";
         // 
         // Form1
         // 
@@ -352,6 +417,8 @@ partial class Form1
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = SystemColors.ControlLightLight;
         ClientSize = new Size(1786, 973);
+        Controls.Add(label3);
+        Controls.Add(comboBox1);
         Controls.Add(btn_reset);
         Controls.Add(btn_doStep);
         Controls.Add(btn_start);
@@ -369,11 +436,13 @@ partial class Form1
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).EndInit();
         panel2.ResumeLayout(false);
         panel2.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)dg_settings).EndInit();
         ((System.ComponentModel.ISupportInitialize)dg_symbolNames).EndInit();
         panel3.ResumeLayout(false);
         panel3.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dg_objectModule).EndInit();
         ResumeLayout(false);
+        PerformLayout();
     }
 
     #endregion
@@ -404,4 +473,9 @@ partial class Form1
     private DataGridViewTextBoxColumn Address;
     private DataGridViewTextBoxColumn Length;
     private DataGridViewTextBoxColumn OperandPart;
+    private ComboBox comboBox1;
+    private Label label3;
+    private Label label6;
+    private DataGridView dg_settings;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
 }

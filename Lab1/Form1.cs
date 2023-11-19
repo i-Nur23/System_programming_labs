@@ -17,21 +17,38 @@ public partial class Form1 : Form
         operationCodesTable = new OperationCodes(dg_operCodes);
         symbolicNamesTable = new SymbolicNames(dg_symbolNames);
         objectModule = new ObjectModule(dg_objectModule);
+        modificationsTable = new ModificationsTable(dg_settings);
 
         FillExample();
+
+        Addressing.CreateAddressing(0);
+        addressing = Addressing.GetAddressing();
+        comboBox1.SelectedIndex = 0;
 
     }
 
     private OperationCodes operationCodesTable;
     private SymbolicNames symbolicNamesTable;
     private ObjectModule objectModule;
+    private ModificationsTable modificationsTable;
     private BindingList<ObjectModuleRecord> objectModuleList = ObjectModuleList.GetInstance();
     private IEnumerator<ObjectModuleRecord> passEnumerator;
 
+    private Addressing addressing;
 
     private string[] DirectCode()
     {
         return File.ReadAllLines("..\\..\\..\\Examples\\direct.txt");
+    }
+
+    private string[] RelativeCode()
+    {
+        return File.ReadAllLines("..\\..\\..\\Examples\\relative.txt");
+    }
+
+    private string[] MixedCode()
+    {
+        return File.ReadAllLines("..\\..\\..\\Examples\\mixed.txt");
     }
 
     // Заполнение примера
@@ -62,7 +79,7 @@ public partial class Form1 : Form
 
         if (initCode.Count == 0)
         {
-            throw new Exception("Ошибка. Пустой исходный код");  
+            throw new Exception("Ошибка. Пустой исходный код");
         }
 
         return initCode;
@@ -85,6 +102,7 @@ public partial class Form1 : Form
         TB_firstPassError.Clear();
         symbolicNamesTable?.Clear();
         objectModule?.Clear();
+        modificationsTable?.Clear();
         passEnumerator = null;
     }
 
@@ -147,7 +165,7 @@ public partial class Form1 : Form
             if (passEnumerator.MoveNext())
             {
                 objectModuleList.Add(passEnumerator.Current);
-            } 
+            }
             else
             {
                 ClearAll();
@@ -173,5 +191,31 @@ public partial class Form1 : Form
     private void btn_reset_Click(object sender, EventArgs e)
     {
         ClearAll();
+    }
+
+    private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string[] code = null;
+
+        switch (comboBox1.SelectedIndex)
+        {
+            case 0:
+                code = DirectCode();
+                addressing.AddressType = AddressingType.DIRECT;
+                break;
+            case 1:
+                code = RelativeCode();
+                addressing.AddressType = AddressingType.RELATIVE;
+                break;
+            case 2:
+                code = MixedCode();
+                addressing.AddressType = AddressingType.MIXED;
+                break;
+        }
+
+        ClearAll();
+        tb_initCode.Clear();
+
+        tb_initCode.AppendText(String.Join('\n', code));
     }
 }

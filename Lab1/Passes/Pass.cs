@@ -1,21 +1,18 @@
 ﻿using Lab1.Models;
-using Lab1.Tables;
 using System.Globalization;
-using System.Text.RegularExpressions;
-using Lab1.Exceptions;
-using System.Runtime.CompilerServices;
 using Lab1.Singletons;
 using System.ComponentModel;
 using System.Collections;
 using System.Runtime;
 using System.Text;
+using Lab1.Exceptions;
 
 namespace Lab1.Passes;
 
 public class Pass : IEnumerable<ObjectModuleRecord>
 {
     private SymbolicName tempNameInfo;
-    
+    private ObjectModuleRecord tempRecord;
 
     private int loadAddress;
     private int countAddress;
@@ -31,8 +28,10 @@ public class Pass : IEnumerable<ObjectModuleRecord>
     private bool isStarted = false;
     private bool isEnded = false;
     private BindingList<SymbolicName> symbolicNames = SymbolicNamesList.GetInstance();
-    private ObjectModuleRecord tempRecord; 
     private BindingList<ObjectModuleRecord> binaryCodeLines = ObjectModuleList.GetInstance();
+    private BindingList<Modifier> modifiers = ModifiersList.GetInstance();
+
+    private Addressing addressing = Addressing.GetAddressing();
 
     private StringBuilder sb = new StringBuilder();
 
@@ -40,8 +39,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
     public Pass(
         List<string> code, 
         List<Operation> operations
-        )
-
+    )
     {
         this.code = code;
         this.operations = operations;
@@ -149,6 +147,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             throw new Exception($"Строка {index + 1}: более 4-x частей быть не может!");
         }
 
+        // Если имеется метка
         if (line[0].ToUpper() != commandName)
         {
 
@@ -164,17 +163,42 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             }
 
             tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper());
-
             ProcessLabel(tempNameInfo, index, line[0]);
             
             if (line.Length == 2 || Checks.IsDirectAddressing(line[2]))
             {
                 binaryCode = operation.BinaryCode * 4;
             }
+            else if (Checks.IsRightRelativeAddressing(line[2]))
+            {
+                if (addressing.AddressType == AddressingType.DIRECT)
+                {
+                    throw new WrongAddressException(index + 1);
+                }
+
+                binaryCode = operation.BinaryCode * 4 + 2;
+
+                switch (line.Length)
+                {
+                    case 4:
+                        ProcessLabelOperand(line[2], index);
+                        ProcessLabelOperand(line[3], index);
+                        break;
+                    case 3:
+                        ProcessLabelOperand(line[2], index);
+                        break;
+                    default:
+                        break;
+                }
+            }
             else
             {
-                binaryCode = operation.BinaryCode * 4 + 1;
+                if (addressing.AddressType == AddressingType.RELATIVE)
+                {
+                    throw new WrongAddressException(index + 1);
+                }
 
+                binaryCode = operation.BinaryCode * 4 + 1;
 
                 switch (line.Length)
                 {
@@ -194,11 +218,19 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             {
                 if (!Checks.IsDirectAddressing(line[3]))
                 {
+                    if (Checks.IsRightRelativeAddressing(line[3]) && addressing.AddressType == AddressingType.DIRECT)
+                    {
+                        throw new WrongAddressException(index + 1);
+                    }
                     if (!Checks.IsRightLabel(line[3]))
                     {
                         throw new Exception($"Строка {index + 1}: неверный формат операнда");
                     }
-                }    
+                    if (addressing.AddressType == AddressingType.RELATIVE && !Checks.IsRegister(line[3]))
+                    {
+                        throw new WrongAddressException(index + 1);
+                    }
+                }
             }
         }
         else
@@ -212,8 +244,35 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             {
                 binaryCode = operation.BinaryCode * 4;
             }
+            else if (Checks.IsRightRelativeAddressing(line[1]))
+            {
+                if (addressing.AddressType == AddressingType.DIRECT)
+                {
+                    throw new WrongAddressException(index + 1);
+                }
+
+                binaryCode = operation.BinaryCode * 4 + 2;
+
+                switch (line.Length)
+                {
+                    case 3:
+                        ProcessLabelOperand(line[1], index);
+                        ProcessLabelOperand(line[2], index);
+                        break;
+                    case 2:
+                        ProcessLabelOperand(line[1], index);
+                        break;
+                    default:
+                        break;
+                }
+            }
             else
             {
+                if (addressing.AddressType == AddressingType.RELATIVE)
+                {
+                    throw new WrongAddressException(index + 1);
+                }
+
                 if (!Checks.IsRightLabel(line[1]))
                 {
                     throw new Exception($"Строка {index + 1}: неверный формат операнда");
@@ -237,12 +296,17 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             
             if (lineElementsCount == 3)
             {
-                if (!Checks.IsDirectAddressing(line[2]))
+                if (Checks.IsRightRelativeAddressing(line[2]) && addressing.AddressType == AddressingType.DIRECT)
                 {
-                    if (!Checks.IsRightLabel(line[2]))
-                    {
-                        throw new Exception($"Строка {index + 1}: неверный формат операнда");
-                    }
+                    throw new WrongAddressException(index + 1);
+                }
+                if (!Checks.IsRightLabel(line[2]))
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат операнда");
+                }
+                if (addressing.AddressType == AddressingType.RELATIVE && !Checks.IsRegister(line[2]))
+                {
+                    throw new WrongAddressException(index + 1);
                 }    
             }
         }
@@ -401,24 +465,16 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 isStarted = true;
 
-                var isAddressOk = Int32.TryParse(
-                        line[2],
-                        NumberStyles.HexNumber,
-                        CultureInfo.CurrentCulture,
-                        out int addressInCommand
-                    );
-
-                if (!isAddressOk)
+                if (line.Length > 2)
                 {
-                    throw new Exception("В адресе загрузки не число или число превышающее память");
+                    var isAddressOk = Int32.TryParse(line[2], out int startAddress);
+                    if (!isAddressOk || startAddress != 0)
+                    {
+                        throw new Exception("В адресе загрузки должен быть 0");
+                    }
                 }
 
-                if (addressInCommand == 0)
-                {
-                    throw new Exception("В адресе загрузки не должно быть 0");
-                }
-
-                loadAddress = addressInCommand;
+                loadAddress = 0;
 
                 if (line[0].Length > 6)
                 {
@@ -449,11 +505,12 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 tempRecord.Type = RecordType.H;
                 tempRecord.Address = line[0];
-                tempRecord.Length = Converters.ToSixDigits(line[2]);
+                tempRecord.Length = "000000";
                 
                 break;
             case "END":
                 CheckSymbolicNames();
+                AddModifyingLinesToObjectModule();
 
                 if (line.Length > 2)
                 {
@@ -478,7 +535,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     line[1],
                     NumberStyles.HexNumber,
                     CultureInfo.CurrentCulture,
-                    out endAddress
+                    out _
                     );
 
                     if (!isEndAddressOk)
@@ -487,13 +544,17 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     }
                 }
 
+                endAddress = 0;
+
                 if (endAddress < loadAddress || endAddress > countAddress)
                 {
                     throw new Exception("Неверный адрес входа в программу");
                 }
 
+
+
                 tempRecord.Type = RecordType.E;
-                tempRecord.Address =  Converters.ToSixDigits(endAddress.ToString("X"));
+                tempRecord.Address =  "000000";
 
                 binaryCodeLines.First().OperandPart = Converters.ToSixDigits((countAddress - loadAddress).ToString("X"));
 
@@ -826,6 +887,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
     private void ProcessLabel(SymbolicName nameFoundInTable, int index, string label)
     {
+        // Если нет в ТСИ, то добавляем
         if (nameFoundInTable == null)
         {
             symbolicNames.Add(new SymbolicName()
@@ -838,21 +900,55 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         }
 
 
+        // Если уже назначен адрес в ТСИ, то ошибка
         if (nameFoundInTable.Address != null)
         {
             throw new Exception($"строка {index + 1}: имени {label.ToUpper()} уже назаначен адрес");
         }
 
+        // Иначе идем по ОМ и заменяем операнды на соответствующие адреса
         var indexOfName = symbolicNames.IndexOf(nameFoundInTable);
         var countOfName = symbolicNames.Count(n => String.Equals(n.Name, nameFoundInTable.Name));
 
-        var substringTemplate = $"${label}$";
+        var substringTemplateDirect = $"${label}$";
+        var substringTemplateRelative = $"#{label}#";
 
-        foreach (var line in binaryCodeLines)
+        for (int k = 0; k < binaryCodeLines.Count; k++)
         {
-            if (line.OperandPart != null && line.OperandPart.Contains(substringTemplate, StringComparison.OrdinalIgnoreCase))
+            var line = binaryCodeLines[k];
+
+            if (line.OperandPart != null)
             {
-                line.OperandPart = line.OperandPart.Replace(substringTemplate, Converters.ToSixDigits(countAddress.ToString("X")), StringComparison.OrdinalIgnoreCase);
+                if (line.OperandPart.Contains(substringTemplateDirect, StringComparison.OrdinalIgnoreCase))
+                {
+                    line.OperandPart =
+                        line.OperandPart.Replace(
+                        substringTemplateDirect,
+                        Converters.ToSixDigits(countAddress.ToString("X")),
+                        StringComparison.OrdinalIgnoreCase
+                    );
+                }
+                else if (line.OperandPart.Contains(substringTemplateRelative, StringComparison.OrdinalIgnoreCase))
+                {
+                    int nextAddress;
+
+                    if (k == binaryCodeLines.Count - 1)
+                    {
+                        nextAddress = countAddress;
+                    }
+                    else
+                    {
+                        nextAddress = Int32.Parse(binaryCodeLines[k + 1].Address, NumberStyles.HexNumber);
+                    }
+
+                    line.OperandPart =
+                        line.OperandPart.Replace(
+                        substringTemplateRelative,
+                        Converters.ToSixDigits((countAddress - nextAddress).ToString("X")),
+                        StringComparison.OrdinalIgnoreCase
+                        );
+
+                }
             }
         }
 
@@ -872,8 +968,17 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
     private void ProcessLabelOperand(string name, int index)
     {
+        // Проверка и вычленение имени из оператора []
+        bool isRelative = Checks.IsRightRelativeAddressing(name);
+
+        if (isRelative)
+        {
+            name = name.Substring(1, name.Length - 2);
+        }
+
         int symbolicNameIndex;
 
+        // Случай, когда ТСИ пуста
         if (symbolicNames.Count == 0)
         {
             symbolicNameIndex = 0;
@@ -884,18 +989,37 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 OperandAddress = Converters.ToSixDigits(countAddress.ToString("X"))
             });
 
+            // Вставка в ТМ, если адресация не относительная
+            if (!isRelative)
+            {
+                modifiers.Add(new Modifier
+                {
+                    Address = Converters.ToSixDigits(countAddress.ToString("X"))
+                });
+            }
+
             return;
         }
 
+        // Иначе находим все поля в ТСИ с этим же именем
         var names = symbolicNames
             .Where(sn => String.Equals(sn.Name, name, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
+        // Если имя уже определено ранее, то вставляем в ТМ, если не относительная адресация
         if (names.Count != 0 && names[0].Address != null)
         {
+            if (!isRelative)
+            {
+                modifiers.Add(new Modifier
+                {
+                    Address = Converters.ToSixDigits(countAddress.ToString("X"))
+                });
+            }
             return;
         }
 
+        // Установка позиции в списке, куда будет производится вставка
         if (names.Count == 0)
         {
             symbolicNameIndex = symbolicNames.Count - 1;
@@ -905,11 +1029,21 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             symbolicNameIndex = symbolicNames.IndexOf(names.Last());
         }
 
-        symbolicNames.Insert(symbolicNameIndex, new SymbolicName()
+        // Вставка в список
+        symbolicNames.Insert(symbolicNameIndex + 1, new SymbolicName()
         {
             Name = name.ToUpper(),
             OperandAddress = Converters.ToSixDigits(countAddress.ToString("X"))
-        }); 
+        });
+
+        // Вставка в ТМ, если адресация не относительная
+        if (!isRelative)
+        {
+            modifiers.Add(new Modifier
+            {
+                Address = Converters.ToSixDigits(countAddress.ToString("X"))
+            });
+        }
 
     }
 
@@ -954,18 +1088,58 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             return Int32.Parse(operand.Substring(1)).ToString("X");
         }
 
+        bool isRelative = Checks.IsRightRelativeAddressing(operand);
+
         SymbolicName symbolicName;
+
+        if (isRelative)
+        {
+            operand = operand.Substring(1, operand.Length - 2);
+        }
 
         symbolicName = symbolicNames
             .FirstOrDefault(n => String.Equals(n.Name, operand, StringComparison.OrdinalIgnoreCase));
 
         if (symbolicName == null || symbolicName.Address == null )
         {
+            if (isRelative)
+            {
+                return $"#{operand}#";
+            }
+
             return $"${operand}$";    
+        }
+
+        if (isRelative)
+        {
+            var nameAddress = Int32.Parse(symbolicName.Address, NumberStyles.HexNumber);
+            var length = operations
+                .First(op => String.Equals(operation, op.MnemonicCode, StringComparison.OrdinalIgnoreCase))
+                .CommandLength;
+
+            var nextAddress = countAddress + length;
+
+            return Converters.ToSixDigits((nameAddress - nextAddress).ToString("X"));
         }
 
         return symbolicName.Address;
 
+    }
+
+    private void AddModifyingLinesToObjectModule()
+    {
+        ObjectModuleRecord modRecord;
+
+        foreach (var mod in modifiers)
+        {
+            modRecord = new ObjectModuleRecord
+            {
+                Type = RecordType.M,
+                Address = mod.Address
+            };
+
+            binaryCodeLines.Add(modRecord);
+        }
     }
 
     IEnumerator IEnumerable.GetEnumerator()
