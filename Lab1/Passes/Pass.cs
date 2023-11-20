@@ -155,6 +155,10 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
             }
 
+            if (operation.CommandLength == 4 && line.Length != 3)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
 
             if (!Checks.IsRightLabel(line[0].ToUpper()))
             {
@@ -210,6 +214,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         else
         {
             if (operation.CommandLength == 2 && line.Length != 3)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
+
+            if (operation.CommandLength == 4 && line.Length != 2)
             {
                 throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
             }
@@ -399,7 +408,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
         if (line[0].ToUpper() == dirName && line.Length == 4)
         {
-            throw new Exception($"Строка {index + 1}: oперандов не может быть более 2-х");   
+            throw new Exception($"Строка {index + 1}: oперандов не может бы ть более 2-х");   
         }
         
         switch (dirName)
@@ -409,6 +418,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 if (index != 0 || isStarted)
                 {
                     throw new Exception("Директива START должна встречаться один раз и в начале программы");
+                }
+
+                if (line.Length != 3)
+                {
+                    throw new Exception("Ошибка. Неверный формат директивы START");
                 }
 
                 isStarted = true;
@@ -430,6 +444,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     throw new Exception("В адресе загрузки не должно быть 0");
                 }
 
+                if (line[2].Length > 6)
+                {
+                    throw new Exception("Адрес загрузки превышает 3 байта");
+                }
+
                 loadAddress = addressInCommand;
 
                 if (line[0].Length > 6)
@@ -447,7 +466,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     throw new Exception("В адресе загрузки указано отрицательное число");
                 }
 
-                if (loadAddress >= MAX_MEMORY_VOLUME)
+                if (loadAddress >= MAX_MEMORY_VOLUME + 1)
                 {
                     throw new Exception("В адресе загрузки указан недопустимый адрес");
                 }
@@ -779,7 +798,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                     if (!Checks.IsRightLabel(line[0]))
                     {
-                        throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
+                        throw new Exception($"строка { index + 1 }: метка должна содержать только латинские буквы и цифры, " +
                             $"и начинаться с буквы или знака \'_\'");
                     }
 
@@ -789,7 +808,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 {
                     if (line[0].ToUpper() != "RESW")
                     {
-                        throw new Exception($"Строка { index + 1}: неверный формат директивы RESW");
+                        throw new Exception($"Строка { index + 1 }: неверный формат директивы RESW");
                     }
 
                     reswStringOperand = line[1];
