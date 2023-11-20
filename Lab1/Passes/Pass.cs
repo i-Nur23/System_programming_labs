@@ -1,6 +1,4 @@
 ﻿using Lab1.Models;
-using Lab1.Tables;
-using System.Globalization;
 using System.Text.RegularExpressions;
 using Lab1.Exceptions;
 using System.Runtime.CompilerServices;
@@ -9,13 +7,13 @@ using System.ComponentModel;
 using System.Collections;
 using System.Runtime;
 using System.Text;
+using System.Globalization;
 
 namespace Lab1.Passes;
 
 public class Pass : IEnumerable<ObjectModuleRecord>
 {
     private SymbolicName tempNameInfo;
-    
 
     private int loadAddress;
     private int countAddress;
@@ -152,6 +150,12 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         if (line[0].ToUpper() != commandName)
         {
 
+            if (operation.CommandLength == 2 && line.Length != 4)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
+
+
             if (!Checks.IsRightLabel(line[0].ToUpper()))
             {
                 throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
@@ -192,6 +196,8 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
             if (lineElementsCount == 4)
             {
+              
+
                 if (!Checks.IsDirectAddressing(line[3]))
                 {
                     if (!Checks.IsRightLabel(line[3]))
@@ -203,6 +209,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         }
         else
         {
+            if (operation.CommandLength == 2 && line.Length != 3)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
+
             if (lineElementsCount == 4)
             {
                 throw new Exception($"Строка {index + 1}: oперандов не может быть более 2-х");
@@ -237,6 +248,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             
             if (lineElementsCount == 3)
             {
+
                 if (!Checks.IsDirectAddressing(line[2]))
                 {
                     if (!Checks.IsRightLabel(line[2]))
@@ -522,7 +534,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                     if (!Checks.IsRightLabel(line[0]))
                     {
-                        throw new Exception($"строка {index + 1}: метка должна содержать только латинские буквы и цифры, " +
+                        throw new Exception($"строка { index + 1 }: метка должна содержать только латинские буквы и цифры, " +
                             $"и начинаться с буквы или знака \'_\'");
                     }
 
@@ -723,7 +735,6 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     throw new Exception($"Строка { index + 1 }: нельзя резервировать отрицательное или нулевое количество байт");
                 }
 
-
                 tempRecord.Type = RecordType.T;
                 tempRecord.Address = Converters.ToSixDigits(countAddress.ToString("X"));
                 tempRecord.Length = Converters.ToTwoDigits((resbOperand * 2).ToString("X"));
@@ -731,10 +742,8 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 if (resbLabel != null)
                 {
                     tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, resbLabel, StringComparison.OrdinalIgnoreCase));
-
                     ProcessLabel(tempNameInfo, index, resbLabel);
                 }
-
 
                 checked
                 {
@@ -905,7 +914,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             symbolicNameIndex = symbolicNames.IndexOf(names.Last());
         }
 
-        symbolicNames.Insert(symbolicNameIndex, new SymbolicName()
+        symbolicNames.Insert(symbolicNameIndex + 1, new SymbolicName()
         {
             Name = name.ToUpper(),
             OperandAddress = Converters.ToSixDigits(countAddress.ToString("X"))
