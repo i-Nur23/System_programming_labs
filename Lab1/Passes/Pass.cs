@@ -150,6 +150,15 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         // Если имеется метка
         if (line[0].ToUpper() != commandName)
         {
+            if (operation.CommandLength == 2 && line.Length != 4)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
+
+            if (operation.CommandLength == 4 && line.Length != 3)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
 
             if (!Checks.IsRightLabel(line[0].ToUpper()))
             {
@@ -235,10 +244,22 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         }
         else
         {
+            if (operation.CommandLength == 2 && line.Length != 3)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
+
+            if (operation.CommandLength == 4 && line.Length != 2)
+            {
+                throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
+
             if (lineElementsCount == 4)
             {
                 throw new Exception($"Строка {index + 1}: oперандов не может быть более 2-х");
             }
+
+
             
             if (lineElementsCount == 1 || Checks.IsDirectAddressing(line[1]))
             {
@@ -442,6 +463,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         if (dirName != "START" && !isStarted)
         {
             throw new Exception("Ошибка. В программе должна присутствовать директива START");
+        }
+
+        if (line.Length < 2)
+        {
+            throw new Exception("Ошибка. Неверный формат директивы START");
         }
 
         if (line[0].ToUpper() != dirName && line[1].ToUpper() != dirName)

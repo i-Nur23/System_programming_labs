@@ -139,13 +139,13 @@ public partial class Form1 : Form
         catch (OverflowException ex)
         {
             TB_firstPassError.Text = "Ошибка. Произошло переполнение";
-            TB_firstPassError.AppendText(ex.StackTrace);
+            //TB_firstPassError.AppendText(ex.StackTrace);
         }
 
         catch (Exception ex)
         {
             TB_firstPassError.Text = ex.Message;
-            TB_firstPassError.AppendText(ex.StackTrace);
+            //TB_firstPassError.AppendText(ex.StackTrace);
         }
     }
 
@@ -178,13 +178,13 @@ public partial class Form1 : Form
         catch (OverflowException ex)
         {
             TB_firstPassError.Text = "Ошибка. Произошло переполнение";
-            TB_firstPassError.AppendText(ex.StackTrace);
+            //TB_firstPassError.AppendText(ex.StackTrace);
         }
 
         catch (Exception ex)
         {
             TB_firstPassError.Text = ex.Message;
-            TB_firstPassError.AppendText(ex.StackTrace);
+            //TB_firstPassError.AppendText(ex.StackTrace);
         }
     }
 
