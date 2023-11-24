@@ -430,7 +430,7 @@ partial class Form1
         Margin = new Padding(4);
         Name = "Form1";
         StartPosition = FormStartPosition.Manual;
-        Text = "Однопросмотровый ассемблер для программ в абсолютном формате";
+        Text = "Однопросмотровый ассемблер для программ в перемещаемом формате";
         panel1.ResumeLayout(false);
         panel1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).EndInit();

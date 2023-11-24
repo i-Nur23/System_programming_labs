@@ -465,11 +465,6 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             throw new Exception("Ошибка. В программе должна присутствовать директива START");
         }
 
-        if (line.Length < 2)
-        {
-            throw new Exception("Ошибка. Неверный формат директивы START");
-        }
-
         if (line[0].ToUpper() != dirName && line[1].ToUpper() != dirName)
         {
             throw new Exception($"Строка {index + 1}: в строке не может более одной метки");
@@ -487,6 +482,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 if (index != 0 || isStarted)
                 {
                     throw new Exception("Директива START должна встречаться один раз и в начале программы");
+                }
+
+                if (line.Length < 2)
+                {
+                    throw new Exception("Ошибка. Неверный формат директивы START");
                 }
 
                 isStarted = true;
@@ -561,7 +561,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     line[1],
                     NumberStyles.HexNumber,
                     CultureInfo.CurrentCulture,
-                    out _
+                    out endAddress
                     );
 
                     if (!isEndAddressOk)
@@ -569,8 +569,6 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                         throw new Exception("В адресе входа в программу указано не число");
                     }
                 }
-
-                endAddress = 0;
 
                 if (endAddress < loadAddress || endAddress > countAddress)
                 {
@@ -580,7 +578,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
 
                 tempRecord.Type = RecordType.E;
-                tempRecord.Address =  "000000";
+                tempRecord.Address = Converters.ToSixDigits(endAddress.ToString("X"));
 
                 binaryCodeLines.First().OperandPart = Converters.ToSixDigits((countAddress - loadAddress).ToString("X"));
 
@@ -599,7 +597,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 {
                     if (line[0].ToUpper() == "BYTE" || line[2].ToUpper() == "BYTE")
                     {
-                        throw new Exception($"Строка { index + 1}: неверный формат директивы BYTE");
+                        throw new Exception($"Строка { index + 1 }: неверный формат директивы BYTE");
                     }
 
                     if (Checks.IsRegister(line[0]))
@@ -809,7 +807,6 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 {
                     throw new Exception($"Строка { index + 1 }: нельзя резервировать отрицательное или нулевое количество байт");
                 }
-
 
                 tempRecord.Type = RecordType.T;
                 tempRecord.Address = Converters.ToSixDigits(countAddress.ToString("X"));
