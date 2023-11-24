@@ -5,6 +5,8 @@ namespace Lab1.Models
     public enum RecordType
     {
         H,
+        D,
+        R,
         T,
         M,
         E

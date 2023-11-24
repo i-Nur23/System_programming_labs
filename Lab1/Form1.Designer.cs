@@ -39,14 +39,10 @@ partial class Form1
         tb_initCode = new RichTextBox();
         panel2 = new Panel();
         dg_settings = new DataGridView();
-        dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
         label6 = new Label();
         label5 = new Label();
         label4 = new Label();
         dg_symbolNames = new DataGridView();
-        dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
-        dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
-        Тип = new DataGridViewTextBoxColumn();
         TB_firstPassError = new RichTextBox();
         panel3 = new Panel();
         dg_objectModule = new DataGridView();
@@ -60,6 +56,13 @@ partial class Form1
         btn_reset = new Button();
         comboBox1 = new ComboBox();
         label3 = new Label();
+        dataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+        LabelInSymbolicNames = new DataGridViewTextBoxColumn();
+        dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
+        dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
+        Тип = new DataGridViewTextBoxColumn();
+        NameType = new DataGridViewTextBoxColumn();
+        Section = new DataGridViewTextBoxColumn();
         panel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).BeginInit();
         panel2.SuspendLayout();
@@ -178,7 +181,7 @@ partial class Form1
         dg_settings.AllowUserToResizeRows = false;
         dg_settings.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
         dg_settings.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dg_settings.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1 });
+        dg_settings.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn1, LabelInSymbolicNames });
         dg_settings.Location = new Point(6, 446);
         dg_settings.Margin = new Padding(4);
         dg_settings.Name = "dg_settings";
@@ -188,15 +191,6 @@ partial class Form1
         dg_settings.RowTemplate.Height = 29;
         dg_settings.Size = new Size(569, 270);
         dg_settings.TabIndex = 10;
-        // 
-        // dataGridViewTextBoxColumn1
-        // 
-        dataGridViewTextBoxColumn1.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn1.DataPropertyName = "Address";
-        dataGridViewTextBoxColumn1.HeaderText = "Адрес";
-        dataGridViewTextBoxColumn1.MinimumWidth = 6;
-        dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-        dataGridViewTextBoxColumn1.ReadOnly = true;
         // 
         // label6
         // 
@@ -236,7 +230,7 @@ partial class Form1
         dg_symbolNames.AllowUserToResizeRows = false;
         dg_symbolNames.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
         dg_symbolNames.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dg_symbolNames.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn5, Тип });
+        dg_symbolNames.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn5, Тип, NameType, Section });
         dg_symbolNames.Location = new Point(5, 36);
         dg_symbolNames.Margin = new Padding(4);
         dg_symbolNames.Name = "dg_symbolNames";
@@ -246,33 +240,6 @@ partial class Form1
         dg_symbolNames.RowTemplate.Height = 29;
         dg_symbolNames.Size = new Size(569, 368);
         dg_symbolNames.TabIndex = 6;
-        // 
-        // dataGridViewTextBoxColumn4
-        // 
-        dataGridViewTextBoxColumn4.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn4.DataPropertyName = "Name";
-        dataGridViewTextBoxColumn4.HeaderText = "СИ";
-        dataGridViewTextBoxColumn4.MinimumWidth = 6;
-        dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
-        dataGridViewTextBoxColumn4.ReadOnly = true;
-        // 
-        // dataGridViewTextBoxColumn5
-        // 
-        dataGridViewTextBoxColumn5.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        dataGridViewTextBoxColumn5.DataPropertyName = "Address";
-        dataGridViewTextBoxColumn5.HeaderText = "Адрес СИ";
-        dataGridViewTextBoxColumn5.MinimumWidth = 6;
-        dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
-        dataGridViewTextBoxColumn5.ReadOnly = true;
-        // 
-        // Тип
-        // 
-        Тип.DataPropertyName = "OperandAddress";
-        Тип.HeaderText = "Значение СА";
-        Тип.MinimumWidth = 6;
-        Тип.Name = "Тип";
-        Тип.ReadOnly = true;
-        Тип.Width = 125;
         // 
         // TB_firstPassError
         // 
@@ -411,6 +378,69 @@ partial class Form1
         label3.TabIndex = 7;
         label3.Text = "Пример";
         // 
+        // dataGridViewTextBoxColumn1
+        // 
+        dataGridViewTextBoxColumn1.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn1.DataPropertyName = "Address";
+        dataGridViewTextBoxColumn1.HeaderText = "Адрес";
+        dataGridViewTextBoxColumn1.MinimumWidth = 6;
+        dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+        dataGridViewTextBoxColumn1.ReadOnly = true;
+        // 
+        // LabelInSymbolicNames
+        // 
+        LabelInSymbolicNames.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        LabelInSymbolicNames.DataPropertyName = "Section";
+        LabelInSymbolicNames.HeaderText = "Секция";
+        LabelInSymbolicNames.MinimumWidth = 6;
+        LabelInSymbolicNames.Name = "LabelInSymbolicNames";
+        LabelInSymbolicNames.ReadOnly = true;
+        // 
+        // dataGridViewTextBoxColumn4
+        // 
+        dataGridViewTextBoxColumn4.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn4.DataPropertyName = "Name";
+        dataGridViewTextBoxColumn4.HeaderText = "СИ";
+        dataGridViewTextBoxColumn4.MinimumWidth = 6;
+        dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+        dataGridViewTextBoxColumn4.ReadOnly = true;
+        // 
+        // dataGridViewTextBoxColumn5
+        // 
+        dataGridViewTextBoxColumn5.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        dataGridViewTextBoxColumn5.DataPropertyName = "Address";
+        dataGridViewTextBoxColumn5.HeaderText = "Адрес СИ";
+        dataGridViewTextBoxColumn5.MinimumWidth = 6;
+        dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+        dataGridViewTextBoxColumn5.ReadOnly = true;
+        // 
+        // Тип
+        // 
+        Тип.DataPropertyName = "OperandAddress";
+        Тип.HeaderText = "Значение СА";
+        Тип.MinimumWidth = 6;
+        Тип.Name = "Тип";
+        Тип.ReadOnly = true;
+        Тип.Width = 125;
+        // 
+        // NameType
+        // 
+        NameType.DataPropertyName = "StringType";
+        NameType.HeaderText = "Тип";
+        NameType.MinimumWidth = 6;
+        NameType.Name = "NameType";
+        NameType.ReadOnly = true;
+        NameType.Width = 125;
+        // 
+        // Section
+        // 
+        Section.DataPropertyName = "Section";
+        Section.HeaderText = "Секция";
+        Section.MinimumWidth = 6;
+        Section.Name = "Section";
+        Section.ReadOnly = true;
+        Section.Width = 125;
+        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(10F, 25F);
@@ -466,9 +496,6 @@ partial class Form1
     private Button btn_start;
     private Button btn_doStep;
     private Button btn_reset;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
-    private DataGridViewTextBoxColumn Тип;
     private DataGridViewTextBoxColumn Type;
     private DataGridViewTextBoxColumn Address;
     private DataGridViewTextBoxColumn Length;
@@ -478,4 +505,10 @@ partial class Form1
     private Label label6;
     private DataGridView dg_settings;
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
+    private DataGridViewTextBoxColumn LabelInSymbolicNames;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+    private DataGridViewTextBoxColumn Тип;
+    private DataGridViewTextBoxColumn NameType;
+    private DataGridViewTextBoxColumn Section;
 }

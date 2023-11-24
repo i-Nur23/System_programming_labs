@@ -6,6 +6,7 @@ using System.Collections;
 using System.Runtime;
 using System.Text;
 using Lab1.Exceptions;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Lab1.Passes;
 
@@ -25,6 +26,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
     private readonly List<string> code;
     private readonly List<Operation> operations;
 
+    private List<string> sectionNames = new List<string>();
+
+    private List<string> tableOfExtdef = new List<string>();
+    private List<string> tableOfExtref = new List<string>();
+
     private bool isStarted = false;
     private bool isEnded = false;
     private BindingList<SymbolicName> symbolicNames = SymbolicNamesList.GetInstance();
@@ -34,6 +40,9 @@ public class Pass : IEnumerable<ObjectModuleRecord>
     private Addressing addressing = Addressing.GetAddressing();
 
     private StringBuilder sb = new StringBuilder();
+
+    private string lastAddedDirective;
+    private string currentSectionName;
 
 
     public Pass(
@@ -583,7 +592,100 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 tempRecord.Address =  "000000";
 
                 binaryCodeLines.First().OperandPart = Converters.ToSixDigits((countAddress - loadAddress).ToString("X"));
+                break;
 
+            case "EXTDEF":
+
+                if (lastAddedDirective != "START" &&
+                    lastAddedDirective != "CSEC" &&
+                    lastAddedDirective != "EXTDEF")
+                {
+                    throw new Exception($"Строка {index + 1}: неверная позиция EXTDEF");
+                }
+
+
+                if (line.Length != 2 ||
+                    !String.Equals(line[0].ToUpper(), "EXTDEF") ||
+                    !Checks.IsRightLabel(line[1]))
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат директивы EXTDEF");
+                }
+
+                var exportName = line[1];
+
+                if (
+                    tableOfExtdef.Contains(exportName, StringComparer.OrdinalIgnoreCase)
+                )
+                {  
+                    throw new Exception($"Строка {index + 1}: имя не уникально для EXTDEF");
+                }
+
+                if (tableOfExtref.Contains(exportName, StringComparer.OrdinalIgnoreCase) || sectionNames.Contains(exportName, StringComparer.OrdinalIgnoreCase))
+                {
+                    throw new Exception($"Строка {index + 1}: имя не уникально");
+                }
+
+                tempRecord.Type = RecordType.D;
+                tempRecord.Address = exportName;
+
+                symbolicNames.Add(new SymbolicName
+                {
+                    Name = exportName,
+                    Section = currentSectionName,
+                    Type = NameTypes.ExternalName
+                });
+
+                tableOfExtdef.Add(exportName.ToUpper());
+
+
+                break;
+            case "EXTREF":
+                if (lastAddedDirective != "START" &&
+                    lastAddedDirective != "CSEC" &&
+                    lastAddedDirective != "EXTDEF" &&
+                    lastAddedDirective != "EXTREF")
+                {
+                    throw new Exception($"Строка {index + 1}: неверная позиция EXTREF");
+                }
+
+
+                if (line.Length != 2 ||
+                    !String.Equals(line[0].ToUpper(), "EXTREF") ||
+                    !Checks.IsRightLabel(line[1]))
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат директивы EXTREF");
+                }
+
+                var importName = line[1];
+
+                if (
+                    tableOfExtref.Contains(importName, StringComparer.OrdinalIgnoreCase)
+                )
+                {
+                    throw new Exception($"Строка {index + 1}: имя не уникально для EXTREF");
+                }
+
+                if (tableOfExtdef.Contains(importName, StringComparer.OrdinalIgnoreCase) || 
+                    sectionNames.Contains(importName, StringComparer.OrdinalIgnoreCase))
+                {
+                    throw new Exception($"Строка {index + 1}: имя не уникально");
+                }
+
+                tempRecord.Type = RecordType.R;
+                tempRecord.Address = importName;
+
+                symbolicNames.Add(new SymbolicName
+                {
+                    Name = importName,
+                    Section = currentSectionName,
+                    Type = NameTypes.ExternalReference
+                });
+
+                tableOfExtref.Add(importName.ToUpper());
+
+
+                break;
+            case "CSEC":
                 break;
             case "BYTE":
 
@@ -909,6 +1011,8 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             default:
                 break;
         }
+
+        lastAddedDirective = dirName;
     }
 
     private void ProcessLabel(SymbolicName nameFoundInTable, int index, string label)
