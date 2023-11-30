@@ -180,7 +180,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 throw new Exception($"Строка {index + 1}: метка не может быть регистром");
             }
 
-            tempNameInfo = symbolicNames.FirstOrDefault(n => n.Name == line[0].ToUpper());
+            tempNameInfo = symbolicNames.FirstOrDefault(n => IsSame(n.Name, line[0]) && IsSame(n.Section, currentSectionName));
             ProcessLabel(tempNameInfo, index, line[0]);
             
             if (line.Length == 2 || Checks.IsDirectAddressing(line[2]))
@@ -213,7 +213,12 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             {
                 if (addressing.AddressType == AddressingType.RELATIVE)
                 {
-                    throw new WrongAddressException(index + 1);
+                    if (symbolicNames.FirstOrDefault(n => IsSame(n.Name, line[2]) 
+                        && IsSame(n.Section, currentSectionName) 
+                        && n.Type == NameTypes.ExternalReference) == null)
+                    {
+                        throw new WrongAddressException(index + 1);
+                    }
                 }
 
                 binaryCode = operation.BinaryCode * 4 + 1;
@@ -268,7 +273,6 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 throw new Exception($"Строка {index + 1}: oперандов не может быть более 2-х");
             }
 
-
             
             if (lineElementsCount == 1 || Checks.IsDirectAddressing(line[1]))
             {
@@ -300,7 +304,12 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             {
                 if (addressing.AddressType == AddressingType.RELATIVE)
                 {
-                    throw new WrongAddressException(index + 1);
+                    if (symbolicNames.FirstOrDefault(n => IsSame(n.Name, line[1])
+                        && IsSame(n.Section, currentSectionName)
+                        && n.Type == NameTypes.ExternalReference) == null)
+                    {
+                        throw new WrongAddressException(index + 1);
+                    }
                 }
 
                 if (!Checks.IsRightLabel(line[1]))
@@ -343,7 +352,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
         sb.Append(Converters.ToTwoDigits(binaryCode.ToString("X")));
 
-        if (!String.Equals(line[0], commandName, StringComparison.OrdinalIgnoreCase))
+        if (!IsSame(line[0], commandName))
         {
             if (lineElementsCount > 2)
             {
@@ -474,11 +483,6 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             throw new Exception("Ошибка. В программе должна присутствовать директива START");
         }
 
-        if (line.Length < 2)
-        {
-            throw new Exception("Ошибка. Неверный формат директивы START");
-        }
-
         if (line[0].ToUpper() != dirName && line[1].ToUpper() != dirName)
         {
             throw new Exception($"Строка {index + 1}: в строке не может более одной метки");
@@ -496,6 +500,11 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 if (index != 0 || isStarted)
                 {
                     throw new Exception("Директива START должна встречаться один раз и в начале программы");
+                }
+
+                if (line.Length < 2)
+                {
+                    throw new Exception("Ошибка. Неверный формат директивы START");
                 }
 
                 isStarted = true;
@@ -541,6 +550,9 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 tempRecord.Type = RecordType.H;
                 tempRecord.Address = line[0];
                 tempRecord.Length = "000000";
+
+                currentSectionName = line[0];
+                sectionNames.Add(currentSectionName);
                 
                 break;
             case "END":
@@ -570,28 +582,28 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     line[1],
                     NumberStyles.HexNumber,
                     CultureInfo.CurrentCulture,
-                    out _
+                    out endAddress
                     );
 
                     if (!isEndAddressOk)
                     {
                         throw new Exception("В адресе входа в программу указано не число");
                     }
+                } else
+                {
+                    endAddress = 0;
                 }
-
-                endAddress = 0;
 
                 if (endAddress < loadAddress || endAddress > countAddress)
                 {
                     throw new Exception("Неверный адрес входа в программу");
                 }
 
-
+                ControlSectionEnding(currentSectionName);
 
                 tempRecord.Type = RecordType.E;
-                tempRecord.Address =  "000000";
+                tempRecord.Address =  Converters.ToSixDigits(endAddress.ToString("X"));
 
-                binaryCodeLines.First().OperandPart = Converters.ToSixDigits((countAddress - loadAddress).ToString("X"));
                 break;
 
             case "EXTDEF":
@@ -605,7 +617,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
 
                 if (line.Length != 2 ||
-                    !String.Equals(line[0].ToUpper(), "EXTDEF") ||
+                    !IsSame(line[0], "EXTDEF") ||
                     !Checks.IsRightLabel(line[1]))
                 {
                     throw new Exception($"Строка {index + 1}: неверный формат директивы EXTDEF");
@@ -632,7 +644,8 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 {
                     Name = exportName,
                     Section = currentSectionName,
-                    Type = NameTypes.ExternalName
+                    Type = NameTypes.ExternalName,
+                    OperandAddressList = new List<string>()
                 });
 
                 tableOfExtdef.Add(exportName.ToUpper());
@@ -678,7 +691,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 {
                     Name = importName,
                     Section = currentSectionName,
-                    Type = NameTypes.ExternalReference
+                    Type = NameTypes.ExternalReference,
                 });
 
                 tableOfExtref.Add(importName.ToUpper());
@@ -686,6 +699,43 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 break;
             case "CSEC":
+                if (line.Length != 2 || IsSame(line[0].ToUpper(), "CSEC"))
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат директивы CSEC");
+                }
+
+                if (!Checks.IsRightLabel(line[0]))
+                {
+                    throw new Exception($"Строка {index + 1}: неверный формат метки в директиве CSEC");
+                }
+
+                if (symbolicNames.FirstOrDefault(n => n.Name == line[0]) != null ||
+                    sectionNames.IndexOf(line[0].ToUpper()) != -1)
+                {
+                    throw new Exception($"Строка {index + 1}: имя {line[0]} уже использовано ранее ");
+                }
+
+                ControlSectionEnding(sectionNames.Last());
+
+                binaryCodeLines.Add(new ObjectModuleRecord
+                {
+                    Type = RecordType.E, 
+                    Address = "000000",
+                });
+
+                tempRecord.Type = RecordType.H;
+                tempRecord.Address = line[0];
+                tempRecord.Length = "000000";
+
+                sectionNames.Add(line[0]);
+
+                countAddress = 0;
+
+                currentSectionName = line[0];
+
+                tableOfExtdef.Clear();
+                tableOfExtref.Clear();
+
                 break;
             case "BYTE":
 
@@ -766,7 +816,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 if (byteLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, byteLabel, StringComparison.OrdinalIgnoreCase));
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => IsSame(n.Name, byteLabel) && IsSame(n.Section, currentSectionName));
                     ProcessLabel(tempNameInfo, index, byteLabel);
                 }
 
@@ -798,7 +848,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 if (line.Length == 3)
                 {
-                    if (line[0].ToUpper() == "WORD" || line[2].ToUpper() == "WORD")
+                    if (IsSame(line[0], "WORD") || IsSame(line[2], "WORD"))
                     {
                         throw new Exception($"Строка { index + 1}: неверный формат директивы WORD");
                     }
@@ -840,7 +890,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 if (wordLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, wordLabel, StringComparison.OrdinalIgnoreCase));
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => IsSame(n.Name, wordLabel) && IsSame(n.Section, currentSectionName));
                     ProcessLabel(tempNameInfo, index, wordLabel);
                 }
 
@@ -919,7 +969,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 if (resbLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, resbLabel, StringComparison.OrdinalIgnoreCase));
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => IsSame(n.Name, resbLabel) && IsSame(n.Section, currentSectionName));
 
                     ProcessLabel(tempNameInfo, index, resbLabel);
                 }
@@ -989,7 +1039,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 if (reswLabel != null)
                 {
-                    tempNameInfo = symbolicNames.FirstOrDefault(n => String.Equals(n.Name, reswLabel, StringComparison.OrdinalIgnoreCase));
+                    tempNameInfo = symbolicNames.FirstOrDefault(n => IsSame(n.Name, reswLabel) && IsSame(n.Section, currentSectionName));
                     ProcessLabel(tempNameInfo, index, reswLabel);
                 }
 
@@ -1017,16 +1067,24 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
     private void ProcessLabel(SymbolicName nameFoundInTable, int index, string label)
     {
+
         // Если нет в ТСИ, то добавляем
         if (nameFoundInTable == null)
         {
             symbolicNames.Add(new SymbolicName()
             {
                 Name = label.ToUpper(),
-                Address = Converters.ToSixDigits(countAddress.ToString("X"))
+                Address = Converters.ToSixDigits(countAddress.ToString("X")),
+                Section = currentSectionName
             });
 
             return;
+        }
+
+        // Если внешняя ссылка - ошибка
+        if (nameFoundInTable.Type == NameTypes.ExternalReference)
+        {
+            throw new Exception($"Строка {index + 1}: имя {nameFoundInTable.Name} уже есть в ТСИ как ВС");
         }
 
 
@@ -1036,9 +1094,16 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             throw new Exception($"строка {index + 1}: имени {label.ToUpper()} уже назаначен адрес");
         }
 
-        // Иначе идем по ОМ и заменяем операнды на соответствующие адреса
-        var indexOfName = symbolicNames.IndexOf(nameFoundInTable);
-        var countOfName = symbolicNames.Count(n => String.Equals(n.Name, nameFoundInTable.Name));
+        if (nameFoundInTable.Type == NameTypes.ExternalName)
+        {
+            var defRecord = binaryCodeLines.FirstOrDefault(line => line.Type == RecordType.D
+                && IsSame(line.Address, label)
+                && line.Length == null // это условие позволяет не проверять секцию
+            );
+
+            defRecord.Length = Converters.ToSixDigits(countAddress.ToString("X"));
+        }
+        
 
         var substringTemplateDirect = $"${label}$";
         var substringTemplateRelative = $"#{label}#";
@@ -1082,17 +1147,9 @@ public class Pass : IEnumerable<ObjectModuleRecord>
             }
         }
 
-        for (int j = 0; j < countOfName; j++)
-        {
-            symbolicNames
-                .Remove(symbolicNames.FirstOrDefault(n => String.Equals(n.Name, nameFoundInTable.Name, StringComparison.OrdinalIgnoreCase)));
-        }
 
-        symbolicNames.Insert(indexOfName, new SymbolicName()
-        {
-            Name = label.ToUpper(),
-            Address = Converters.ToSixDigits(countAddress.ToString("X"))
-        });
+        nameFoundInTable.Address = Converters.ToSixDigits(countAddress.ToString("X"));
+        nameFoundInTable.OperandAddressList = null;
 
     }
 
@@ -1111,20 +1168,30 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         // Случай, когда ТСИ пуста
         if (symbolicNames.Count == 0)
         {
-            symbolicNameIndex = 0;
 
-            symbolicNames.Insert(symbolicNameIndex, new SymbolicName()
+            symbolicNames.Add(new SymbolicName()
             {
                 Name = name.ToUpper(),
-                OperandAddress = Converters.ToSixDigits(countAddress.ToString("X"))
+                OperandAddressList = new List<string> { Converters.ToSixDigits(countAddress.ToString("X")) },
+                Section = currentSectionName
             });
 
             // Вставка в ТМ, если адресация не относительная
             if (!isRelative)
             {
+                var operandAddress = Converters.ToSixDigits(countAddress.ToString("X"));
+
+                if (symbolicNames.FirstOrDefault(sn => IsSame(sn.Name, name) 
+                    && sn.Type == NameTypes.ExternalReference 
+                    && sn.Section == currentSectionName) != null)
+                {
+                    operandAddress += $" {name}";
+                }
+
                 modifiers.Add(new Modifier
                 {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X"))
+                    Address = operandAddress,
+                    Section = currentSectionName
                 });
             }
 
@@ -1132,46 +1199,69 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         }
 
         // Иначе находим все поля в ТСИ с этим же именем
-        var names = symbolicNames
-            .Where(sn => String.Equals(sn.Name, name, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        var symbolicName = symbolicNames.FirstOrDefault(sn => IsSame(sn.Name, name) && IsSame(sn.Section, currentSectionName));
 
         // Если имя уже определено ранее, то вставляем в ТМ, если не относительная адресация
-        if (names.Count != 0 && names[0].Address != null)
+        if (symbolicName != null && symbolicName.Address != null)
         {
             if (!isRelative)
             {
+                var operandAddress = Converters.ToSixDigits(countAddress.ToString("X"));
+
+                if (symbolicNames.FirstOrDefault(sn => IsSame(sn.Name, name)
+                    && sn.Type == NameTypes.ExternalReference
+                    && sn.Section == currentSectionName) != null)
+                {
+                    operandAddress += $" {name}";
+                }
+
                 modifiers.Add(new Modifier
                 {
-                    Address = Converters.ToSixDigits(countAddress.ToString("X"))
+                    Address = operandAddress,
+                    Section = currentSectionName
                 });
             }
             return;
         }
 
-        // Установка позиции в списке, куда будет производится вставка
-        if (names.Count == 0)
-        {
-            symbolicNameIndex = symbolicNames.Count - 1;
-        }
-        else
-        {
-            symbolicNameIndex = symbolicNames.IndexOf(names.Last());
-        }
 
-        // Вставка в список
-        symbolicNames.Insert(symbolicNameIndex + 1, new SymbolicName()
+        if (symbolicName == null)
         {
-            Name = name.ToUpper(),
-            OperandAddress = Converters.ToSixDigits(countAddress.ToString("X"))
-        });
+            symbolicNames.Add(new SymbolicName()
+            {
+                Name = name.ToUpper(),
+                OperandAddressList = new List<string> { Converters.ToSixDigits(countAddress.ToString("X")) },
+                Section = currentSectionName
+            });
+        } 
+        else if (symbolicName.Type != NameTypes.ExternalReference)
+        {
+
+            if (symbolicName.OperandAddressList == null)
+            {
+                symbolicName.OperandAddressList = new List<string>();
+            }
+
+            symbolicName.OperandAddressList.Add(Converters.ToSixDigits(countAddress.ToString("X")));
+        }
 
         // Вставка в ТМ, если адресация не относительная
         if (!isRelative)
         {
+
+            var operandAddress = Converters.ToSixDigits(countAddress.ToString("X"));
+
+            if (symbolicNames.FirstOrDefault(sn => IsSame(sn.Name, name)
+                    && sn.Type == NameTypes.ExternalReference
+                    && sn.Section == currentSectionName) != null)
+            {
+                operandAddress += $" {name}";
+            }
+
             modifiers.Add(new Modifier
             {
-                Address = Converters.ToSixDigits(countAddress.ToString("X"))
+                Address = operandAddress,
+                Section = currentSectionName
             });
         }
 
@@ -1228,7 +1318,19 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         }
 
         symbolicName = symbolicNames
-            .FirstOrDefault(n => String.Equals(n.Name, operand, StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(n => IsSame(n.Name, operand) && IsSame(n.Section, currentSectionName));
+
+
+
+        if (symbolicName != null && symbolicName.Type == NameTypes.ExternalReference)
+        {
+            if (isRelative)
+            {
+                throw new Exception($"Строка {index + 1}: внешняя ссылка не может участвовать в относительной адресации");
+            }
+
+            return "000000"; 
+        }
 
         if (symbolicName == null || symbolicName.Address == null )
         {
@@ -1244,7 +1346,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         {
             var nameAddress = Int32.Parse(symbolicName.Address, NumberStyles.HexNumber);
             var length = operations
-                .First(op => String.Equals(operation, op.MnemonicCode, StringComparison.OrdinalIgnoreCase))
+                .First(op => IsSame(operation, op.MnemonicCode))
                 .CommandLength;
 
             var nextAddress = countAddress + length;
@@ -1270,6 +1372,34 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
             binaryCodeLines.Add(modRecord);
         }
+    }
+
+    public static bool IsSame(string str1, string str2)
+    {
+        return String.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void ControlSectionEnding(string sectionName)
+    {
+        var sectionPart = symbolicNames
+            .Where(name => IsSame(name.Section, sectionName) && name.Type != NameTypes.ExternalReference)
+            .ToList();
+
+        if (sectionPart.Count == 0) return;
+
+        var nameWithoiutAddress = sectionPart.FirstOrDefault(name => name.Address == null);
+
+        if (nameWithoiutAddress != null)
+        {
+            throw new Exception($"Ошибка: имени {nameWithoiutAddress.Name} не присвоен адрес");
+        }
+
+        var sectionHeaderRecord = binaryCodeLines.FirstOrDefault(
+            line => line.Type == RecordType.H 
+                && IsSame(line.Address, sectionName));
+
+        sectionHeaderRecord.OperandPart = Converters.ToSixDigits(countAddress.ToString("X"));
+
     }
 
     IEnumerator IEnumerable.GetEnumerator()

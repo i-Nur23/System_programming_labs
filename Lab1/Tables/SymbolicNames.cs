@@ -26,4 +26,9 @@ public class SymbolicNames
     {
         table.Rows.Clear();
     }
+
+    public void Refresh()
+    {
+        table.Refresh();
+    }
 }

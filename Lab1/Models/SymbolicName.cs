@@ -13,7 +13,9 @@ public class SymbolicName
     
     public string Address { get; set; }
 
-    public string OperandAddress { get; set; }
+    internal List<string> OperandAddressList { get; set; }
+
+    public string OperandAddress => OperandAddressList == null ? null : String.Join("\n", OperandAddressList);
 
     internal NameTypes Type { get; set; } = NameTypes.SymbolicName;
 
