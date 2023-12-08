@@ -118,6 +118,8 @@ public class Pass : IEnumerable<ObjectModuleRecord>
     // Обработка команд
     private void HandleCommand(string[] line, int index, string commandName)
     {
+        bool isOperandNumber = false;
+
         if (!isStarted)
         {
             throw new Exception("Ошибка. В программе должна присутствовать директива START");
@@ -159,15 +161,33 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         // Если имеется метка
         if (line[0].ToUpper() != commandName)
         {
-            if (operation.CommandLength == 2 && line.Length != 4)
+            if (operation.CommandLength == 1 && line.Length != 2)
             {
                 throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
             }
 
-            if (operation.CommandLength == 4 && line.Length != 3)
+            if (operation.CommandLength == 2 && line.Length != 4)
             {
+                if (Int32.TryParse(line[2], out int x) && x <= 255 && x >= -256)
+                {
+                    isOperandNumber = true; 
+                }
+
+                else
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+            }
+
+            if (operation.CommandLength == 4 && line.Length != 3)
+            {    
                 throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
             }
+
+            if  (operation.CommandLength != 1 && Int32.TryParse(line[2], out int a) && a <= MAX_WORD && a >= -(MAX_WORD + 1))
+            {
+                isOperandNumber = true;
+            } 
 
             if (!Checks.IsRightLabel(line[0].ToUpper()))
             {
@@ -196,18 +216,21 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 binaryCode = operation.BinaryCode * 4 + 2;
 
-                switch (line.Length)
+                if (!isOperandNumber)
                 {
-                    case 4:
-                        ProcessLabelOperand(line[2], index);
-                        ProcessLabelOperand(line[3], index);
-                        break;
-                    case 3:
-                        ProcessLabelOperand(line[2], index);
-                        break;
-                    default:
-                        break;
-                }
+                    switch (line.Length)
+                    {
+                        case 4:
+                            ProcessLabelOperand(line[2], index);
+                            ProcessLabelOperand(line[3], index);
+                            break;
+                        case 3:
+                            ProcessLabelOperand(line[2], index);
+                            break;
+                        default:
+                            break;
+                    }
+                }            
             }
             else
             {
@@ -258,9 +281,26 @@ public class Pass : IEnumerable<ObjectModuleRecord>
         }
         else
         {
-            if (operation.CommandLength == 2 && line.Length != 3)
+            if (operation.CommandLength == 1 && line.Length != 1)
             {
                 throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+            }
+
+            if (operation.CommandLength == 2 && line.Length != 3)
+            {
+                if (Int32.TryParse(line[1], out int y) && y <= 255 && y >= -256)
+                {
+                    isOperandNumber = true;
+                } 
+                else
+                {
+                    throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
+                }
+            }
+
+            if (operation.CommandLength != 1 && Int32.TryParse(line[1], out int z) && z <= MAX_WORD && z >= -(MAX_WORD + 1))
+            {
+                isOperandNumber = true;
             }
 
             if (operation.CommandLength == 4 && line.Length != 2)
@@ -319,17 +359,20 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 
                 binaryCode = operation.BinaryCode * 4 + 1;
 
-                switch (line.Length)
+                if (!isOperandNumber)
                 {
-                    case 3:
-                        ProcessLabelOperand(line[1], index);
-                        ProcessLabelOperand(line[2], index);
-                        break;
-                    case 2:
-                        ProcessLabelOperand(line[1], index);
-                        break;
-                    default:
-                        break;
+                    switch (line.Length)
+                    {
+                        case 3:
+                            ProcessLabelOperand(line[1], index);
+                            ProcessLabelOperand(line[2], index);
+                            break;
+                        case 2:
+                            ProcessLabelOperand(line[1], index);
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
             
@@ -372,7 +415,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
                 
-                if (!Checks.IsRegister(line[2]) && commandLength == 2)
+                if (!Checks.IsRegister(line[2]) && commandLength == 2 && !isOperandNumber)
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
@@ -427,7 +470,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
                 
-                if (!Checks.IsRegister(line[1]) && commandLength == 2)
+                if (!Checks.IsRegister(line[1]) && commandLength == 2 && !isOperandNumber)
                 {
                     throw new Exception($"Строка {index + 1}: строка не соответсвует длине команды");
                 }
@@ -1287,9 +1330,17 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 case "WORD":
                     return Converters.ToSixDigits(hexNumber.ToString("X"));
                 default:
-                    return Converters.ToSixDigits(hexNumber.ToString("X"));
+                    var op = operations.FirstOrDefault(o => IsSame(o.MnemonicCode, operation));
+                    if (op == null || op.CommandLength == 4)
+                    {
+                        return Converters.ToSixDigits(hexNumber.ToString("X"));
+                    }
+
+                    return Converters.ToTwoDigits(hexNumber.ToString("X"));
             }
         }
+
+
 
         if (Checks.IsByteArray(operand))
         {
