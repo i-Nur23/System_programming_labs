@@ -22,7 +22,7 @@ namespace Lab1.Tables
         public void Clear()
         {
             table.Rows.Clear();
-        }
+        }   
 
     }
 }

@@ -54,16 +54,16 @@ partial class Form1
         TB_firstPassError = new RichTextBox();
         panel3 = new Panel();
         dg_objectModule = new DataGridView();
-        Type = new DataGridViewTextBoxColumn();
-        Address = new DataGridViewTextBoxColumn();
-        Length = new DataGridViewTextBoxColumn();
-        OperandPart = new DataGridViewTextBoxColumn();
         label8 = new Label();
         btn_start = new Button();
         btn_doStep = new Button();
         btn_reset = new Button();
         comboBox1 = new ComboBox();
         label3 = new Label();
+        Type = new DataGridViewTextBoxColumn();
+        Address = new DataGridViewTextBoxColumn();
+        Length = new DataGridViewTextBoxColumn();
+        OperandPart = new DataGridViewTextBoxColumn();
         panel1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).BeginInit();
         panel2.SuspendLayout();
@@ -349,42 +349,6 @@ partial class Form1
         dg_objectModule.Size = new Size(569, 859);
         dg_objectModule.TabIndex = 8;
         // 
-        // Type
-        // 
-        Type.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        Type.DataPropertyName = "Type";
-        Type.HeaderText = "Type";
-        Type.MinimumWidth = 6;
-        Type.Name = "Type";
-        Type.ReadOnly = true;
-        // 
-        // Address
-        // 
-        Address.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        Address.DataPropertyName = "Address";
-        Address.HeaderText = "Address";
-        Address.MinimumWidth = 6;
-        Address.Name = "Address";
-        Address.ReadOnly = true;
-        // 
-        // Length
-        // 
-        Length.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        Length.DataPropertyName = "Length";
-        Length.HeaderText = "Length";
-        Length.MinimumWidth = 6;
-        Length.Name = "Length";
-        Length.ReadOnly = true;
-        // 
-        // OperandPart
-        // 
-        OperandPart.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-        OperandPart.DataPropertyName = "OperandPart";
-        OperandPart.HeaderText = "OperandPart";
-        OperandPart.MinimumWidth = 6;
-        OperandPart.Name = "OperandPart";
-        OperandPart.ReadOnly = true;
-        // 
         // label8
         // 
         label8.AutoSize = true;
@@ -444,6 +408,46 @@ partial class Form1
         label3.TabIndex = 7;
         label3.Text = "Пример";
         // 
+        // Type
+        // 
+        Type.DataPropertyName = "Type";
+        Type.FillWeight = 106.951874F;
+        Type.HeaderText = "Type";
+        Type.MinimumWidth = 6;
+        Type.Name = "Type";
+        Type.ReadOnly = true;
+        Type.Width = 50;
+        // 
+        // Address
+        // 
+        Address.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        Address.DataPropertyName = "Address";
+        Address.FillWeight = 97.68271F;
+        Address.HeaderText = "Address";
+        Address.MinimumWidth = 6;
+        Address.Name = "Address";
+        Address.ReadOnly = true;
+        // 
+        // Length
+        // 
+        Length.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        Length.DataPropertyName = "Length";
+        Length.FillWeight = 97.68271F;
+        Length.HeaderText = "Length";
+        Length.MinimumWidth = 6;
+        Length.Name = "Length";
+        Length.ReadOnly = true;
+        // 
+        // OperandPart
+        // 
+        OperandPart.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+        OperandPart.DataPropertyName = "OperandPart";
+        OperandPart.FillWeight = 97.68271F;
+        OperandPart.HeaderText = "OperandPart";
+        OperandPart.MinimumWidth = 6;
+        OperandPart.Name = "OperandPart";
+        OperandPart.ReadOnly = true;
+        // 
         // Form1
         // 
         AutoScaleDimensions = new SizeF(10F, 25F);
@@ -463,7 +467,7 @@ partial class Form1
         Margin = new Padding(4);
         Name = "Form1";
         StartPosition = FormStartPosition.Manual;
-        Text = "Однопросмотровый ассемблер для программ в абсолютном формате";
+        Text = "Однопросмотровый ассемблер для программ в полноперемещаемом формате";
         panel1.ResumeLayout(false);
         panel1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dg_operCodes).EndInit();
@@ -499,10 +503,6 @@ partial class Form1
     private Button btn_start;
     private Button btn_doStep;
     private Button btn_reset;
-    private DataGridViewTextBoxColumn Type;
-    private DataGridViewTextBoxColumn Address;
-    private DataGridViewTextBoxColumn Length;
-    private DataGridViewTextBoxColumn OperandPart;
     private ComboBox comboBox1;
     private Label label3;
     private Label label6;
@@ -514,4 +514,8 @@ partial class Form1
     private DataGridViewTextBoxColumn Тип;
     private DataGridViewTextBoxColumn NameType;
     private DataGridViewTextBoxColumn Section;
+    private DataGridViewTextBoxColumn Type;
+    private DataGridViewTextBoxColumn Address;
+    private DataGridViewTextBoxColumn Length;
+    private DataGridViewTextBoxColumn OperandPart;
 }

@@ -557,7 +557,6 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 break;
             case "END":
                 CheckSymbolicNames();
-                AddModifyingLinesToObjectModule();
 
                 if (line.Length > 2)
                 {
@@ -735,6 +734,13 @@ public class Pass : IEnumerable<ObjectModuleRecord>
 
                 tableOfExtdef.Clear();
                 tableOfExtref.Clear();
+
+                var beforeDir = binaryCodeLines[binaryCodeLines.Count - 2];
+
+                if (beforeDir.Type == RecordType.H)
+                {
+                    beforeDir.OperandPart = "000000";
+                }
 
                 break;
             case "BYTE":
@@ -1399,6 +1405,22 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                 && IsSame(line.Address, sectionName));
 
         sectionHeaderRecord.OperandPart = Converters.ToSixDigits(countAddress.ToString("X"));
+
+        var modifications = modifiers
+            .Where(m => IsSame(m.Section, sectionName))
+            .ToList();
+
+        if (modifications.Count > 0)
+        {
+            foreach (var item in modifications)
+            {
+                binaryCodeLines.Add(new ObjectModuleRecord
+                {
+                    Type = RecordType.M,
+                    Address = item.Address
+               });
+            }
+        }
 
     }
 
