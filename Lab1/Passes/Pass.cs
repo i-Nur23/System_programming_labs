@@ -751,8 +751,7 @@ public class Pass : IEnumerable<ObjectModuleRecord>
                     throw new Exception($"Строка {index + 1}: неверный формат метки в директиве CSEC");
                 }
 
-                if (symbolicNames.FirstOrDefault(n => n.Name == line[0]) != null ||
-                    sectionNames.IndexOf(line[0].ToUpper()) != -1)
+                if (sectionNames.IndexOf(line[0].ToUpper()) != -1)
                 {
                     throw new Exception($"Строка {index + 1}: имя {line[0]} уже использовано ранее ");
                 }
